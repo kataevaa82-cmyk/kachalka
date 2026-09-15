@@ -1,0 +1,256 @@
+{
+  "checked_on": "2026-09-11",
+  "source": "https://yandex.ru/dev/games/doc/ru/console/add-new-game/draft",
+  "images": [
+    {
+      "file": "icon_512.png",
+      "width": 512,
+      "height": 512,
+      "format": "RGB PNG 24-bit",
+      "bytes": 354913
+    },
+    {
+      "file": "ru/cover_800x470.png",
+      "width": 800,
+      "height": 470,
+      "format": "RGB PNG 24-bit",
+      "bytes": 546677
+    },
+    {
+      "file": "ru/screenshots_desktop/01_dumbbells.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 261534
+    },
+    {
+      "file": "ru/screenshots_desktop/02_explore.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 202071
+    },
+    {
+      "file": "ru/screenshots_desktop/03_bench.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 227934
+    },
+    {
+      "file": "ru/screenshots_desktop/04_progress.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 186751
+    },
+    {
+      "file": "ru/screenshots_mobile/01_dumbbells.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 248827
+    },
+    {
+      "file": "ru/screenshots_mobile/02_explore.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 208821
+    },
+    {
+      "file": "ru/screenshots_mobile/03_bench.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 231304
+    },
+    {
+      "file": "ru/screenshots_mobile/04_progress.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 192430
+    },
+    {
+      "file": "en/cover_800x470.png",
+      "width": 800,
+      "height": 470,
+      "format": "RGB PNG 24-bit",
+      "bytes": 523104
+    },
+    {
+      "file": "en/screenshots_desktop/01_dumbbells.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 253387
+    },
+    {
+      "file": "en/screenshots_desktop/02_explore.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 197947
+    },
+    {
+      "file": "en/screenshots_desktop/03_bench.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 225232
+    },
+    {
+      "file": "en/screenshots_desktop/04_progress.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 183346
+    },
+    {
+      "file": "en/screenshots_mobile/01_dumbbells.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 235149
+    },
+    {
+      "file": "en/screenshots_mobile/02_explore.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 200484
+    },
+    {
+      "file": "en/screenshots_mobile/03_bench.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 221356
+    },
+    {
+      "file": "en/screenshots_mobile/04_progress.png",
+      "width": 1280,
+      "height": 720,
+      "format": "RGB PNG 24-bit",
+      "bytes": 185051
+    }
+  ],
+  "videos": [
+    {
+      "file": "ru/gameplay_24s.mp4",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "duration_seconds": 24.0,
+      "audio": [],
+      "bytes": 10316623
+    },
+    {
+      "file": "ru/trailer_24s.mp4",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "duration_seconds": 24.0,
+      "audio": [
+        "aac"
+      ],
+      "bytes": 10376268
+    },
+    {
+      "file": "en/gameplay_24s.mp4",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "duration_seconds": 24.0,
+      "audio": [],
+      "bytes": 10066071
+    },
+    {
+      "file": "en/trailer_24s.mp4",
+      "width": 1280,
+      "height": 720,
+      "fps": 30,
+      "codec": "h264",
+      "pixel_format": "yuv420p",
+      "duration_seconds": 24.0,
+      "audio": [
+        "aac"
+      ],
+      "bytes": 10109600
+    }
+  ],
+  "text_lengths": {
+    "ru": {
+      "name": {
+        "length": 24,
+        "min": 1,
+        "max": 50
+      },
+      "short_description": {
+        "length": 56,
+        "min": 1,
+        "max": 70
+      },
+      "seo_description": {
+        "length": 144,
+        "min": 50,
+        "max": 160
+      },
+      "description": {
+        "length": 757,
+        "min": 100,
+        "max": 1000
+      },
+      "how_to_play": {
+        "length": 719,
+        "min": 100,
+        "max": 1000
+      },
+      "keywords": {
+        "length": 77,
+        "min": 1,
+        "max": 100
+      }
+    },
+    "en": {
+      "name": {
+        "length": 22,
+        "min": 1,
+        "max": 50
+      },
+      "short_description": {
+        "length": 61,
+        "min": 1,
+        "max": 70
+      },
+      "seo_description": {
+        "length": 146,
+        "min": 50,
+        "max": 160
+      },
+      "description": {
+        "length": 791,
+        "min": 100,
+        "max": 1000
+      },
+      "how_to_play": {
+        "length": 725,
+        "min": 100,
+        "max": 1000
+      },
+      "keywords": {
+        "length": 69,
+        "min": 1,
+        "max": 100
+      }
+    }
+  },
+  "status": "PASS"
+}

@@ -1,0 +1,31 @@
+# Godot
+.godot/
+*.translation
+godot/export/web/
+godot/export/windows/
+godot/export/*.zip
+*.log
+
+# Python / Blender
+__pycache__/
+*.pyc
+*.blend1
+*.blend2
+blender/export/
+blender/screenshots/
+
+# OS
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Local playable builds (regenerate via Godot export)
+/Kachalka*.exe
+/Kachalka*.pck
+
+# Generated probe output
+godot/tools/*_result.txt
+
+# Capture / browser junk
+marketing/_work/
+tools/web_probe/build/

@@ -1,0 +1,30 @@
+{
+  "protein": {
+    "id": "protein",
+    "name": "Протеин",
+    "desc": "+45 энергии, +10% к качу на 60 сек.",
+    "price": 40,
+    "kind": "consumable"
+  },
+  "preworkout": {
+    "id": "preworkout",
+    "name": "Предтрен",
+    "desc": "Зелёное окно шире на 90 сек.",
+    "price": 70,
+    "kind": "consumable"
+  },
+  "belt": {
+    "id": "belt",
+    "name": "Пояс",
+    "desc": "Присед даёт +25% навсегда.",
+    "price": 120,
+    "kind": "gear"
+  },
+  "gloves": {
+    "id": "gloves",
+    "name": "Перчатки",
+    "desc": "Первый промах в сете гантелей прощается.",
+    "price": 90,
+    "kind": "gear"
+  }
+}

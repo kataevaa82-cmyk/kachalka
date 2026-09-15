@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+  <title>Качалка: ещё один повтор</title>
+  <style>
+    /* Yandex Games: no page scroll/zoom, no text selection, no long-tap callout or context menu. */
+    html, body {
+      margin:0; padding:0; background:#0a0c10; height:100%; overflow:hidden;
+      touch-action:none; overscroll-behavior:none;
+      user-select:none; -webkit-user-select:none; -webkit-touch-callout:none;
+      -webkit-tap-highlight-color:transparent;
+    }
+    #canvas { display:block; margin:0 auto; outline:none; touch-action:none; }
+    #status { color:#26d9f2; font-family:system-ui,sans-serif; text-align:center; padding-top:40vh; pointer-events:none; }
+  </style>
+  <script id="yandex-games-sdk" src="/sdk.js"></script>
+  $GODOT_HEAD_INCLUDE
+</head>
+<body>
+  <canvas id="canvas" tabindex="1"></canvas>
+  <p id="status">Качалка: ещё один повтор — грузим зал…</p>
+  <script>
+    // Same rule as Loc.gd: Russian for ru/be/kk/uk/uz, English for everyone else.
+    (function(){
+      var lang = (new URLSearchParams(location.search).get('lang') || navigator.language || 'ru').slice(0, 2).toLowerCase();
+      window.__kachRu = ['ru', 'be', 'kk', 'uk', 'uz'].indexOf(lang) >= 0;
+      document.documentElement.lang = window.__kachRu ? 'ru' : 'en';
+      document.title = window.__kachRu ? 'Качалка: ещё один повтор' : 'Kachalka: one more rep';
+      document.getElementById('status').textContent = window.__kachRu ? 'Качалка: ещё один повтор — грузим зал…' : 'Kachalka: one more rep — loading the gym…';
+    })();
+    ['contextmenu', 'selectstart', 'dragstart'].forEach(function(name){
+      document.addEventListener(name, function(e){ e.preventDefault(); });
+    });
+    // Arrow keys / Space / PageDown must never scroll the host page.
+    window.addEventListener('keydown', function(e){
+      if ([' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End'].indexOf(e.key) >= 0) e.preventDefault();
+    });
+    document.addEventListener('wheel', function(e){ e.preventDefault(); }, { passive:false });
+  </script>
+  <script src="$GODOT_URL"></script>
+  <script>
+    const GODOT_CONFIG = $GODOT_CONFIG;
+    const engine = new Engine(GODOT_CONFIG);
+    const status = document.getElementById('status');
+    const canvas = document.getElementById('canvas');
+    engine.startGame({
+      canvas: canvas,
+      onProgress: function(c,t){ if(t>0) status.textContent = (window.__kachRu ? 'Качалка: ещё один повтор ' : 'Kachalka: one more rep ') + Math.floor(100*c/t) + '%'; },
+    }).then(function(){
+      status.style.display = 'none';
+      canvas.focus();
+    }).catch(function(e){ status.textContent = String(e); });
+  </script>
+</body>
+</html>

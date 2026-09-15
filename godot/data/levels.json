@@ -1,0 +1,80 @@
+{
+  "1": {
+    "id": 1,
+    "name": "Подвал «Старт»",
+    "rule": "Освой базовые тренажёры и набери 70 кг",
+    "unlock_mass": 0,
+    "period_scale": 1.0,
+    "window_scale": 1.0,
+    "cash_scale": 1.0,
+    "gain_scale": 1.0,
+    "accent": "#26d9ed",
+    "background": "#12151c",
+    "ambient": "#697381"
+  },
+  "2": {
+    "id": 2,
+    "name": "Районный зал",
+    "rule": "Скоростной круг: темп +6%, награды +15%",
+    "unlock_mass": 70,
+    "period_scale": 0.94,
+    "window_scale": 0.97,
+    "cash_scale": 1.15,
+    "gain_scale": 1.05,
+    "accent": "#55e56d",
+    "background": "#101b16",
+    "ambient": "#6f8776"
+  },
+  "3": {
+    "id": 3,
+    "name": "Железный цех",
+    "rule": "Тяжёлый металл: темп +12%, окна точности уже",
+    "unlock_mass": 82,
+    "period_scale": 0.88,
+    "window_scale": 0.92,
+    "cash_scale": 1.3,
+    "gain_scale": 1.1,
+    "accent": "#ff9b42",
+    "background": "#1b1510",
+    "ambient": "#8a7668"
+  },
+  "4": {
+    "id": 4,
+    "name": "Неоновая лига",
+    "rule": "Ночной спринт: темп +18%, награды +50%",
+    "unlock_mass": 96,
+    "period_scale": 0.82,
+    "window_scale": 0.86,
+    "cash_scale": 1.5,
+    "gain_scale": 1.16,
+    "accent": "#f044b7",
+    "background": "#190f1c",
+    "ambient": "#806481"
+  },
+  "5": {
+    "id": 5,
+    "name": "Арена чемпионов",
+    "rule": "Турнирный режим: темп +24%, идеал требует точности",
+    "unlock_mass": 112,
+    "period_scale": 0.76,
+    "window_scale": 0.8,
+    "cash_scale": 1.75,
+    "gain_scale": 1.22,
+    "accent": "#ffd34f",
+    "background": "#1d1a0e",
+    "ambient": "#8b8368"
+  },
+  "6": {
+    "id": 6,
+    "name": "Кузница титанов",
+    "rule": "Финальный уровень: темп +30%, двойная касса",
+    "unlock_mass": 128,
+    "period_scale": 0.7,
+    "window_scale": 0.74,
+    "cash_scale": 2.0,
+    "gain_scale": 1.3,
+    "accent": "#ff4c4c",
+    "background": "#1c0f11",
+    "ambient": "#8b6266"
+  }
+}
