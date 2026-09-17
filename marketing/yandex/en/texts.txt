@@ -17,6 +17,7 @@ Start as a 62 kg rookie and work your way to the Titan Forge. Explore a 3D gym i
 • 6 progression tiers with faster rhythms, tighter timing windows and bigger rewards.
 • Quests, protein and equipment bought with in-game currency.
 • Rest, showers and a sauna between demanding sets.
+• Mass leaderboard and an original soundtrack.
 
 Three misses end your set. One perfect rep can start your next streak. How far will your combo go?
 
@@ -28,6 +29,8 @@ Desktop: WASD to walk, mouse to look, E to interact, Space to perform a rep. Som
 Mobile: use the left stick to walk, swipe on the right to look, and tap the on-screen action buttons. Hold your device in landscape.
 
 Watch your energy and fatigue. Recover on a bench, in the shower or sauna, and buy upgrades at the bar. Gain mass to unlock more stations and higher gym tiers.
+
+In the pause menu: leaderboard, credits, and sound and music toggles.
 
 keywords
 gym,workout,simulator,weights,muscle,training,reflexes,fitness,combos

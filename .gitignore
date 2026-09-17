@@ -26,6 +26,10 @@ desktop.ini
 # Generated probe output
 godot/tools/*_result.txt
 
+# Derived hand-off archive: every file inside it is tracked under marketing/yandex
+# and marketing/source, so rebuild with marketing/source/package_media.py.
+marketing/Kachalka_Yandex_Media.zip
+
 # Capture / browser junk
 marketing/_work/
 tools/web_probe/build/

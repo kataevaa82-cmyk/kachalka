@@ -169,7 +169,11 @@ try {
   profile = await mkdtemp(join(tmpdir(), "kach-browser-smoke-"));
   chrome = spawn(chromePath, [
     "--headless=new",
-    "--disable-gpu",
+    // Godot needs WebGL 2. Recent Chrome refuses to fall back to software GL in
+    // headless unless asked explicitly, so the canvas would stay blank on CI.
+    "--enable-unsafe-swiftshader",
+    "--use-gl=angle",
+    "--use-angle=swiftshader",
     "--no-sandbox",
     `--remote-debugging-port=${debugPort}`,
 	`--user-data-dir=${profile}`,
