@@ -46,7 +46,12 @@ var quests_done: int = 0
 var _quest_seen: Dictionary = {}
 var _prop_cd: Dictionary = {}
 var last_saved_at: int = 0
+var sfx_on: bool = true
+var music_on: bool = true
 var _local_save_loaded: bool = false
+## A cloud save that landed mid-set: applying it would swap the numbers out from
+## under the player, so it waits for the set to end.
+var _deferred_cloud: Dictionary = {}
 
 
 func _ready() -> void:
@@ -175,6 +180,7 @@ func add_muscle(key: String, amount: float) -> void:
 	stats_changed.emit()
 	if current_level > previous_level:
 		level_unlocked.emit(current_level, level_name(current_level), level_rule(current_level))
+		Audio.play("levelup")
 
 
 func level_data(level: int = -1) -> Dictionary:
@@ -289,9 +295,11 @@ func gain_scale(station_id: String) -> float:
 	return maxf(g, 0.35)
 
 
-## Touch devices get touch controls and must not see keyboard hints (Yandex mobile requirements).
+## Touch devices get touch controls and must not see keyboard hints (Yandex mobile
+## requirements). The answer comes from ysdk.deviceInfo, not from a touchscreen
+## probe: a touch-capable laptop is still a desktop player who needs mouse look.
 func is_touch() -> bool:
-	return DisplayServer.is_touchscreen_available()
+	return YandexSDK.is_mobile_device()
 
 
 func emit_quote(kind: String) -> void:
@@ -308,6 +316,7 @@ func say(text: String) -> void:
 
 func use_prop(id: String) -> void:
 	if float(_prop_cd.get(id, 0.0)) > 0.05:
+		Audio.play("deny", 1.0, -6.0)
 		say("Подожди секунду.")
 		return
 	match id:
@@ -315,6 +324,7 @@ func use_prop(id: String) -> void:
 			add_energy(16.0)
 			add_recovery(4.0)
 			_prop_cd[id] = 14.0
+			Audio.play("water", 1.35)
 			say("Глоток из кулера. Живой.")
 		"chair", "benchrest":
 			if too_filthy():
@@ -325,31 +335,37 @@ func use_prop(id: String) -> void:
 			add_fatigue(-16.0)
 			add_recovery(18.0)
 			_prop_cd[id] = 12.0
+			Audio.play("back")
 			say("Сел. Спина сказала спасибо.")
 		"toilet":
 			add_energy(6.0)
 			add_hygiene(6.0)
 			_prop_cd[id] = 28.0
+			Audio.play("water", 0.8)
 			say("Дела качалочные тоже бывают срочными.")
 		"sink":
 			add_hygiene(18.0)
 			_prop_cd[id] = 8.0
+			Audio.play("water", 1.1)
 			say("Умылся. Грифель с лица смыл.")
 		"shower":
 			add_hygiene(42.0)
 			add_fatigue(-8.0)
 			add_recovery(6.0)
 			_prop_cd[id] = 16.0
+			Audio.play("water")
 			say("Смыл подход. Человек, не гриф.")
 		"tv":
 			add_energy(8.0)
 			add_fatigue(-10.0)
 			add_recovery(12.0)
 			_prop_cd[id] = 16.0
+			Audio.play("click", 0.85)
 			say("Серия про качков. Мотивация +1.")
 		"locker":
 			add_money(2)
 			_prop_cd[id] = 18.0
+			Audio.play("coin")
 			say("В шкафчике нашёл двушку. Сегодня твой день.")
 		"bag":
 			if energy < 4.0:
@@ -365,9 +381,11 @@ func use_prop(id: String) -> void:
 			add_muscle("arms", 0.18)
 			add_money(2)
 			_prop_cd[id] = 0.45
+			Audio.play("whoosh")
 			say("Бах. Груша не обиделась.")
 		"coat":
 			_prop_cd[id] = 10.0
+			Audio.play("back")
 			say("Куртку повесил. Теперь ты качок, не гость.")
 		"sauna":
 			add_energy(18.0)
@@ -375,6 +393,7 @@ func use_prop(id: String) -> void:
 			add_recovery(34.0)
 			add_hygiene(-8.0)
 			_prop_cd[id] = 36.0
+			Audio.play("steam")
 			say("Распарился. Как огурчик. Теперь в душ.")
 		_:
 			say("Ага.")
@@ -427,7 +446,19 @@ func finish_set() -> void:
 	elif recovery >= 78.0:
 		emit_quote("fresh")
 	save_game()
+	# After the save, so the just-finished set carries the newer timestamp and wins.
+	_flush_deferred_cloud()
 	YandexSDK.submit_score(mass_score())
+
+
+## The local session has just written a newer save, so the merge keeps local
+## progress and pushes it up — but the remote copy is no longer silently dropped.
+func _flush_deferred_cloud() -> void:
+	if _deferred_cloud.is_empty():
+		return
+	var data := _deferred_cloud
+	_deferred_cloud = {}
+	_merge_cloud(data)
 
 
 func buy(item_id: String) -> bool:
@@ -441,6 +472,7 @@ func buy(item_id: String) -> bool:
 	if money < price:
 		return false
 	add_money(-price)
+	Audio.play("coin")
 	if kind == "gear":
 		inv[item_id] = true
 	elif item_id == "protein":
@@ -455,6 +487,7 @@ func buy(item_id: String) -> bool:
 
 
 func rewarded_energy() -> void:
+	Audio.play("coin", 1.15)
 	add_energy(60.0)
 	add_recovery(12.0)
 	add_fatigue(-10.0)
@@ -481,6 +514,8 @@ func to_dict() -> Dictionary:
 		"active_quests": active_quests,
 		"quests_done": quests_done,
 		"quest_seen": _quest_seen,
+		"sfx_on": sfx_on,
+		"music_on": music_on,
 		"saved_at": last_saved_at,
 	}
 
@@ -513,6 +548,11 @@ func from_dict(d: Dictionary) -> void:
 	quests_done = maxi(0, int(d.get("quests_done", 0)))
 	var seen_v: Variant = d.get("quest_seen", {})
 	_quest_seen = seen_v if seen_v is Dictionary else {}
+	sfx_on = bool(d.get("sfx_on", true))
+	music_on = bool(d.get("music_on", true))
+	Audio.sfx_on = sfx_on
+	Audio.music_on = music_on
+	# Audio owns the live flags; these fields exist only so the save carries them.
 	last_saved_at = maxi(0, int(d.get("saved_at", 0)))
 	stats_changed.emit()
 	energy_changed.emit()
@@ -559,6 +599,13 @@ func _write_local(data: Dictionary) -> void:
 
 
 func _on_cloud_loaded(data: Dictionary) -> void:
+	if in_set:
+		_deferred_cloud = data.duplicate(true)
+		return
+	_merge_cloud(data)
+
+
+func _merge_cloud(data: Dictionary) -> void:
 	if int(data.get("v", 0)) < 1:
 		if _local_save_loaded:
 			YandexSDK.cloud_save(to_dict())
@@ -776,6 +823,7 @@ func _resolve_quests() -> void:
 			add_energy(20.0)
 			reward += tr("  ·  герой дня +80₽")
 		quest_completed.emit(tr(str(q.get("title", "Задание"))), reward)
+		Audio.play("quest")
 		emit_quote("quest")
 	if not completed.is_empty():
 		_ensure_quests()

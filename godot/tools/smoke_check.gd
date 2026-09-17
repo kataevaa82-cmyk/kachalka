@@ -14,6 +14,7 @@ func _ready() -> void:
 	_check_font()
 	_check_data()
 	_check_i18n()
+	_check_audio()
 	_check_state_regressions()
 	_check_level_progression()
 	await _check_gym_scene()
@@ -28,6 +29,7 @@ func _check_resources() -> void:
 		"res://scripts/gym/gym_world.gd",
 		"res://scripts/ui/hud.gd",
 		"res://scripts/ui/workout_overlay.gd",
+		"res://scripts/autoload/audio.gd",
 		"res://scripts/ui/shop_panel.gd",
 		"res://scripts/ui/title_screen.gd",
 		"res://scenes/boot/title.tscn",
@@ -213,6 +215,44 @@ func _mentions_keys(text: String) -> bool:
 		if word in low:
 			return true
 	return false
+
+
+## Every id the game asks for must exist in the synthesised bank, the bank must
+## hold real samples, and the ad/tab mute must be reason-counted (Yandex: silence
+## while an ad is up, sound back only when every reason is gone).
+func _check_audio() -> void:
+	var wanted := [
+		"click", "back", "deny", "perfect", "good", "miss", "combo", "clank", "plate",
+		"rack", "step", "water", "steam", "whoosh", "coin", "quest", "setdone",
+		"setfail", "levelup", "lowenergy",
+	]
+	for id in wanted:
+		var stream: Variant = Audio._bank.get(id)
+		if stream == null:
+			_errors.append("AUDIO_MISSING %s" % id)
+			continue
+		var wav := stream as AudioStreamWAV
+		if wav == null or wav.data.size() < 512:
+			_errors.append("AUDIO_EMPTY %s" % id)
+	if AudioServer.get_bus_index("SFX") < 0 or AudioServer.get_bus_index("Music") < 0:
+		_errors.append("AUDIO_BUSES_MISSING")
+	# Two overlapping reasons: the first release must not bring the sound back.
+	Audio.hold_mute("ad")
+	Audio.hold_mute("hidden")
+	Audio.release_mute("ad")
+	if not Audio.is_muted():
+		_errors.append("AUDIO_MUTE_NOT_REASON_COUNTED")
+	Audio.release_mute("hidden")
+	if Audio.is_muted():
+		_errors.append("AUDIO_MUTE_STUCK")
+	if AudioServer.is_bus_mute(AudioServer.get_bus_index("SFX")) and Audio.sfx_on:
+		_errors.append("AUDIO_BUS_STILL_MUTED")
+	# Toggles have to survive a save round trip.
+	var sfx_before: bool = Audio.sfx_on
+	Audio.toggle_sfx()
+	if GameState.sfx_on == sfx_before:
+		_errors.append("AUDIO_TOGGLE_NOT_PERSISTED")
+	Audio.toggle_sfx()
 
 
 func _check_state_regressions() -> void:

@@ -6,7 +6,6 @@
   "НАЧАТЬ": "PLAY",
   "WASD — ходьба   мышь — взгляд   E — занять   пробел — повтор   Esc — пауза": "WASD — walk   mouse — look   E — use   Space — rep   Esc — pause",
   "Левый стик — ходьба. Свайп справа — взгляд. Кнопки на экране — действия.": "Left stick — walk. Swipe on the right — look. On-screen buttons — actions.",
-
   "МАССА  0.0": "MASS  0.0",
   "₽ 0": "$0",
   "₽ %d": "$%d",
@@ -24,7 +23,6 @@
   "ПАУЗА": "PAUSED",
   "Продолжить": "Resume",
   "Смотреть рекламу: +60 энергии": "Watch ad: +60 energy",
-
   "Магазин": "Shop",
   "Закрыто. Набери %.0f кг (сейчас %.1f)": "Locked. Reach %.0f kg (now %.1f)",
   "Напиться": "Drink",
@@ -39,12 +37,10 @@
   "Попариться": "Take a steam",
   "Душ": "Shower",
   "УРОВЕНЬ %d/6  ·  %s\n%s": "LEVEL %d/6  ·  %s\n%s",
-
   "%s — %d₽\n%s": "%s — $%d\n%s",
   "%s — КУПЛЕНО": "%s — OWNED",
   "Не хватает ₽": "Not enough $",
   "Закрыть": "Close",
-
   "Уровень %d": "Level %d",
   "Базовый режим": "Standard mode",
   "Подожди секунду.": "Wait a sec.",
@@ -66,7 +62,6 @@
   "+%d₽  +%d эн.": "+$%d  +%d energy",
   "  ·  герой дня +80₽": "  ·  hero of the day +$80",
   "Задание": "Quest",
-
   "ЖИМ": "PRESS",
   "ЖМИ": "PRESS",
   "ЛЕВАЯ": "LEFT",
@@ -106,7 +101,6 @@
   "Замри в зелёной на миг": "Hold still in the green for a moment",
   "Сгибание: сейчас %s. Жми в зелёную.": "Curl: %s now. Hit the green.",
   "Сгибание: сейчас %s. Жми в зелёную (%s или пробел).": "Curl: %s now. Hit the green (%s or Space).",
-
   "Жим лёжа": "Bench Press",
   "Жим: пробел в зелёную, когда гриф у груди.": "Bench: press Space in the green when the bar is at your chest.",
   "Жим: жми кнопку в зелёную, когда гриф у груди.": "Bench: tap the button in the green when the bar is at your chest.",
@@ -144,7 +138,6 @@
   "Молоти кнопку. К концу окна шкала должна быть полной.": "Mash the button. The bar must be full by the end of the window.",
   "Гири": "Kettlebells",
   "Маятник: жми в верхней точке дуги, не молоти.": "Pendulum: hit at the top of the arc, don't mash.",
-
   "Первый жим": "First Press",
   "Закрой сет на жиме лёжа": "Finish a bench press set",
   "Загляни в бар": "Visit the Bar",
@@ -231,7 +224,6 @@
   "Сет на канатах": "A battle ropes set",
   "Жимовая серия": "Press Series",
   "3 сета жима лёжа": "3 bench press sets",
-
   "Вот это жим.": "Now that's a press.",
   "Спину держи — красота.": "Keep your back straight — beautiful.",
   "Зачёт. Ещё раз.": "Counts. Again.",
@@ -268,7 +260,6 @@
   "Тренер бы кивнул.": "The coach would nod.",
   "Ещё одно в копилку.": "One more in the bank.",
   "Так и становятся зверем зала.": "That's how gym beasts are made.",
-
   "Подвал «Старт»": "The Basement",
   "Освой базовые тренажёры и набери 70 кг": "Learn the basic machines and reach 70 kg",
   "Районный зал": "Neighborhood Gym",
@@ -281,7 +272,6 @@
   "Турнирный режим: темп +24%, идеал требует точности": "Tournament mode: tempo +24%, perfects need precision",
   "Кузница титанов": "Titans' Forge",
   "Финальный уровень: темп +30%, двойная касса": "Final level: tempo +30%, double cash",
-
   "Протеин": "Protein",
   "+45 энергии, +10% к качу на 60 сек.": "+45 energy, +10% gains for 60 sec.",
   "Предтрен": "Pre-workout",
@@ -289,5 +279,28 @@
   "Пояс": "Belt",
   "Присед даёт +25% навсегда.": "Squats give +25% forever.",
   "Перчатки": "Gloves",
-  "Первый промах в сете гантелей прощается.": "First miss in a dumbbell set is forgiven."
+  "Первый промах в сете гантелей прощается.": "First miss in a dumbbell set is forgiven.",
+  "вкл": "on",
+  "выкл": "off",
+  "Звук": "Sound",
+  "Музыка": "Music",
+  "Звук: %s": "Sound: %s",
+  "Музыка: %s": "Music: %s",
+  "Титры": "Credits",
+  "ТИТРЫ": "CREDITS",
+  "Таблица рекордов": "Leaderboard",
+  "ТАБЛИЦА РЕКОРДОВ": "LEADERBOARD",
+  "Загружаем…": "Loading…",
+  "Войти в аккаунт": "Sign in",
+  "Аноним": "Anonymous",
+  "%d.  %s  —  %.1f кг": "%d.  %s  —  %.1f kg",
+  "Твоё место: %d": "Your rank: %d",
+  "Пока пусто. Закрой сет — и попадёшь в таблицу.\nРекорд сохраняется только для игроков с аккаунтом Яндекса.": "Nothing here yet. Finish a set and you are on the board.\nScores are only kept for players signed in to Yandex.",
+  "КАЧАЛКА: ЕЩЁ ОДИН ПОВТОР": "KACHALKA: ONE MORE REP",
+  "Движок: Godot Engine — MIT": "Engine: Godot Engine — MIT",
+  "Шрифт: Inter — SIL Open Font License 1.1": "Font: Inter — SIL Open Font License 1.1",
+  "Мебель и реквизит: Kenney Furniture Kit и Food Kit — CC0": "Furniture and props: Kenney Furniture Kit and Food Kit — CC0",
+  "Руки от первого лица: WRAD FPS arms — CC0": "First-person arms: WRAD FPS arms — CC0",
+  "Музыка и звук: синтезируются самой игрой": "Music and sound: synthesised by the game itself",
+  "Полные тексты лицензий лежат в сборке рядом с ассетами.": "Full licence texts ship with the build, next to the assets."
 }

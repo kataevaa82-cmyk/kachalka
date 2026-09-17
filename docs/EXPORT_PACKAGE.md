@@ -10,9 +10,12 @@
 
 | File | Role | Approx size |
 |------|------|-------------|
-| `godot/assets/models/gym_env.glb` | Shell, lanes, neon, mirrors | ~45 KB |
-| `godot/assets/models/gym_stations.glb` | Machines, dressing, `EMP_Station_*` | ~280 KB |
-| `godot/assets/models/sk_hero.glb` | SK_Hero + ARM_Hero + AN_* clips | ~130 KB |
+| `godot/assets/models/gym_env.glb` | Shell, lanes, neon, mirrors | 330 KB |
+| `godot/assets/models/gym_stations.glb` | Machines, dressing, `EMP_Station_*` | 1428 KB |
+| `godot/assets/models/fp_arms.glb` | First-person arms (WRAD, CC0) | 446 KB |
+
+The game is first-person only. There is no third-person hero model: an earlier
+`sk_hero.glb` was never built, and the code that loaded it has been removed.
 
 ## Import notes (Godot 4.7)
 
@@ -20,16 +23,15 @@
 - Do not apply extra scale
 - Collision in GLB (`-convcolonly`) is **not** used: glTF exporter renamed dashed suffixes. Engine colliders are authored in `gym_world.gd::_build_collision`
 - Station detection: nodes whose name starts with `EMP_Station`
-- Hero clips: `AN_Idle AN_Walk AN_Run AN_Bench AN_Squat AN_Curl AN_PullUp`
+- The first-person view is posed from code (`player.gd`), not from animation clips
 
 ## Validation (Blender build)
 
 - Total authored tris **7096** (budget 25 000) — PASS
 - Unapplied scale: none — PASS
 - Default names Cube/Plane: none — PASS
-- Six station empties present — PASS
-- Hero height ~1.72–1.95 m (hair) — PASS
-- `mesh.validate()` run on SK_Hero before last export — PASS
+- Sixteen station empties present (15 machines + shop) — PASS
+- Eye height 1.62 m, capsule r=0.28 h=1.7 — PASS
 
 ## Rebuild
 

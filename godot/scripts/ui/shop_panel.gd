@@ -16,6 +16,7 @@ func show_shop() -> void:
 	if root.visible:
 		return
 	root.visible = true
+	Audio.play("click")
 	get_tree().paused = true
 	GameState.paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
@@ -28,6 +29,7 @@ func hide_shop() -> void:
 	if not root.visible or _ad_busy or YandexSDK.is_ad_active():
 		return
 	root.visible = false
+	Audio.play("back")
 	get_tree().paused = false
 	GameState.paused = false
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
@@ -57,6 +59,7 @@ func _rebuild() -> void:
 			if GameState.buy(captured):
 				_rebuild()
 			else:
+				Audio.play("deny")
 				cash.text = tr("Не хватает ₽")
 		)
 		list.add_child(row)
@@ -76,6 +79,7 @@ func _ad() -> void:
 	if _ad_busy:
 		return
 	_ad_busy = true
+	Audio.play("click")
 	_rebuild()
 	YandexSDK.gameplay_stop()
 	var ok: bool = await YandexSDK.show_rewarded()

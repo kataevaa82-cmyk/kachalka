@@ -1,5 +1,20 @@
 extends CanvasLayer
 
+## Third-party notices shipped with the build. Kenney and WRAD are CC0 and ask for
+## nothing; Inter is SIL OFL, which requires the licence to travel with the font.
+## One line per entry so each stays a normal translation key.
+const CREDITS_LINES := [
+	"КАЧАЛКА: ЕЩЁ ОДИН ПОВТОР",
+	"",
+	"Движок: Godot Engine — MIT",
+	"Шрифт: Inter — SIL Open Font License 1.1",
+	"Мебель и реквизит: Kenney Furniture Kit и Food Kit — CC0",
+	"Руки от первого лица: WRAD FPS arms — CC0",
+	"Музыка и звук: синтезируются самой игрой",
+	"",
+	"Полные тексты лицензий лежат в сборке рядом с ассетами.",
+]
+
 @onready var mass_label: Label = $Root/Top/Mass
 @onready var money_label: Label = $Root/Top/Money
 @onready var energy_bar: ProgressBar = $Root/Top/Energy
@@ -17,9 +32,15 @@ extends CanvasLayer
 @onready var pause_btn: Button = $Root/PauseBtn
 @onready var quest_head: Label = $Root/Quests/Box/Head
 @onready var quest_labels: Array = [$Root/Quests/Box/Q0, $Root/Quests/Box/Q1, $Root/Quests/Box/Q2]
+@onready var sfx_btn: Button = $Root/Pause/Box/Sound/Sfx
+@onready var music_btn: Button = $Root/Pause/Box/Sound/Music
+@onready var board: Control = $Root/Board
+@onready var board_body: Label = $Root/Board/Box/Body
+@onready var board_auth: Button = $Root/Board/Box/Auth
 
 var _quote_ttl: float = 0.0
 var _ad_busy: bool = false
+var _board_open: bool = false
 
 
 func _ready() -> void:
@@ -40,8 +61,14 @@ func _ready() -> void:
 	interact_btn.visible = false
 	if pause_btn:
 		pause_btn.pressed.connect(_on_pause_btn)
-		pause_btn.visible = DisplayServer.is_touchscreen_available() or OS.has_feature("web")
+	board.visible = false
+	YandexSDK.leaderboard_loaded.connect(_on_board_loaded)
+	# deviceInfo lands after the SDK handshake, so the mobile layout has to be
+	# able to rebuild itself rather than being decided once at _ready.
+	YandexSDK.device_resolved.connect(func(_mobile: bool) -> void: _layout_phone())
+	get_viewport().size_changed.connect(_layout_phone)
 	_layout_phone()
+	_refresh_sound_buttons()
 	_refresh()
 	_refresh_quests()
 
@@ -142,18 +169,25 @@ func set_workout(on: bool) -> void:
 		interact_btn.visible = false
 
 
+## Re-runs on every resize and whenever deviceInfo changes its mind, so rotating
+## a phone or leaving fullscreen relayouts instead of keeping the boot-time guess.
 func _layout_phone() -> void:
 	var w := get_viewport().get_visible_rect().size.x
-	var phone := DisplayServer.is_touchscreen_available() and w < 980.0
-	if not phone:
-		return
+	var touch := GameState.is_touch()
+	var phone := touch and w < 980.0
 	var q: Control = $Root/Quests
 	if q:
-		q.offset_right = 250.0
-		q.offset_bottom = 210.0
-		q.modulate.a = 0.82
+		q.offset_right = 250.0 if phone else 330.0
+		q.offset_bottom = 210.0 if phone else 260.0
+		q.modulate.a = 0.82 if phone else 1.0
 	if pause_btn:
-		pause_btn.visible = true
+		pause_btn.visible = touch or OS.has_feature("web")
+	if joystick:
+		joystick.visible = touch and not GameState.in_set and not GameState.paused
+	if look_pad:
+		look_pad.visible = touch and not GameState.in_set and not GameState.paused
+	# The prompt's keyboard hint depends on the same answer; the proximity scan
+	# re-pushes it every frame, so there is nothing to patch up here.
 
 
 func _on_pause_btn() -> void:
@@ -168,7 +202,86 @@ func _on_pause_btn() -> void:
 			world._pause()
 
 
+func _refresh_sound_buttons() -> void:
+	var on := tr("вкл")
+	var off := tr("выкл")
+	sfx_btn.text = tr("Звук: %s") % (on if Audio.sfx_on else off)
+	music_btn.text = tr("Музыка: %s") % (on if Audio.music_on else off)
+
+
+func _on_sfx_pressed() -> void:
+	Audio.toggle_sfx()
+	GameState.save_game()
+	_refresh_sound_buttons()
+
+
+func _on_music_pressed() -> void:
+	Audio.toggle_music()
+	Audio.play("click")
+	GameState.save_game()
+	_refresh_sound_buttons()
+
+
+func _on_credits_pressed() -> void:
+	Audio.play("click")
+	_board_open = true
+	board.visible = true
+	board_auth.visible = false
+	var lines: Array[String] = []
+	for line in CREDITS_LINES:
+		lines.append(tr(str(line)) if str(line) != "" else "")
+	board_body.text = "\n".join(lines)
+	$Root/Board/Box/Head.text = tr("ТИТРЫ")
+
+
+func _on_board_pressed() -> void:
+	Audio.play("click")
+	_board_open = true
+	board.visible = true
+	board_auth.visible = false
+	$Root/Board/Box/Head.text = tr("ТАБЛИЦА РЕКОРДОВ")
+	board_body.text = tr("Загружаем…")
+	YandexSDK.load_leaderboard()
+
+
+func _on_board_loaded(entries: Array, own_rank: int) -> void:
+	if not _board_open:
+		return
+	if entries.is_empty():
+		board_body.text = tr("Пока пусто. Закрой сет — и попадёшь в таблицу.\nРекорд сохраняется только для игроков с аккаунтом Яндекса.")
+		board_auth.visible = true
+		return
+	var rows: Array[String] = []
+	for e in entries:
+		if not e is Dictionary:
+			continue
+		var row: Dictionary = e
+		var who := str(row.get("name", ""))
+		if who.strip_edges() == "":
+			who = tr("Аноним")
+		# The board stores mass × 10 so it can stay an integer leaderboard.
+		rows.append(tr("%d.  %s  —  %.1f кг") % [int(row.get("rank", 0)), who, float(row.get("score", 0)) / 10.0])
+	if own_rank > 0:
+		rows.append("")
+		rows.append(tr("Твоё место: %d") % own_rank)
+	else:
+		board_auth.visible = true
+	board_body.text = "\n".join(rows)
+
+
+func _on_board_auth() -> void:
+	Audio.play("click")
+	YandexSDK.open_auth_dialog()
+
+
+func _on_board_close() -> void:
+	Audio.play("back")
+	_board_open = false
+	board.visible = false
+
+
 func _on_interact() -> void:
+	Audio.play("click", 1.0, -6.0)
 	var world := get_parent()
 	if world.has_method("_try_interact"):
 		world._try_interact()
@@ -196,11 +309,17 @@ func show_pause(on: bool) -> void:
 	if pause_panel:
 		pause_panel.visible = on
 		pause_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	if on:
+		_refresh_sound_buttons()
+	else:
+		_on_board_close()
 
 
 func _on_resume_pressed() -> void:
 	if _ad_busy or YandexSDK.is_ad_active():
 		return
+	if _board_open:
+		_on_board_close()
 	var world := get_parent()
 	if world.has_method("_resume"):
 		world._resume()
@@ -209,6 +328,7 @@ func _on_resume_pressed() -> void:
 func _on_ad_pressed() -> void:
 	if _ad_busy:
 		return
+	Audio.play("click")
 	_ad_busy = true
 	var ad_button: Button = $Root/Pause/Box/AdEnergy
 	ad_button.disabled = true

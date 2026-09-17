@@ -46,6 +46,7 @@ func _ready() -> void:
 	player.global_position = Vector3(0.0, 0.02, 7.6)
 	YandexSDK.loading_ready()
 	YandexSDK.gameplay_start()
+	Audio.start_music()
 	YandexSDK.pause_requested.connect(_on_platform_pause)
 	YandexSDK.resume_requested.connect(_on_platform_resume)
 	GameState.level_unlocked.connect(_on_level_unlocked)
@@ -116,14 +117,17 @@ func _try_interact() -> void:
 		shop_layer.call("show_shop")
 		return
 	if not GameState.can_unlock(sid):
+		Audio.play("deny")
 		GameState.emit_quote("unlock")
 		return
 	if GameState.too_tired():
+		Audio.play("lowenergy")
 		GameState.say("Забой. Сауна или скамейка, иначе сорвёшься.")
 		hud.call("flash_energy")
 		return
 	var cost := float(GameState.stations[sid].get("energy", 12))
 	if GameState.energy < cost:
+		Audio.play("lowenergy")
 		GameState.emit_quote("empty")
 		hud.call("flash_energy")
 		return
@@ -139,6 +143,7 @@ func _start_set(sid: String) -> void:
 	player.global_position = Vector3(node.global_position.x, 0.02, node.global_position.z)
 	player.rotation.y = _station_yaw(sid)
 	player.call("begin_workout", sid)
+	Audio.play("rack")
 	_spawn_workout_fx(node.global_position)
 	hud.call("set_prompt", "")
 	if hud.has_method("set_workout"):
@@ -581,6 +586,7 @@ func _pulse_sauna_steam(delta: float) -> void:
 
 
 func _pause() -> void:
+	Audio.play("click")
 	GameState.paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().paused = true
@@ -589,6 +595,7 @@ func _pause() -> void:
 
 
 func _resume() -> void:
+	Audio.play("back")
 	GameState.paused = false
 	get_tree().paused = false
 	YandexSDK.gameplay_start()
@@ -604,7 +611,7 @@ func _on_platform_pause() -> void:
 	_paused_before_platform = GameState.paused
 	# Props grant money/muscle without saving; the tab may never come back.
 	GameState.save_game()
-	AudioServer.set_bus_mute(0, true)
+	Audio.hold_mute("hidden")
 	if not _paused_before_platform:
 		_pause()
 
@@ -613,7 +620,7 @@ func _on_platform_resume() -> void:
 	if not _platform_paused:
 		return
 	_platform_paused = false
-	AudioServer.set_bus_mute(0, false)
+	Audio.release_mute("hidden")
 	if not _paused_before_platform:
 		_resume()
 	_paused_before_platform = false

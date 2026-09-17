@@ -40,21 +40,22 @@ Export: `export_yup=True`, `export_apply=True`. After import, hero height must m
 ## Scene graph (Godot)
 
 ```
-Boot (Control)
-Game (Node)
-  World (Node3D)
-    GymEnv.tscn          instance gym_env.glb
-    Stations.tscn        instance gym_stations.glb + Station.gd
-    Player (CharacterBody3D)
-      CollisionShape3D     capsule r=0.28 h=1.7
-      SK_Hero              instance sk_hero.glb
-      CameraPivot
-        Camera3D           spring arm, collision
-  CanvasLayer HUD
-  CanvasLayer Workout
-  CanvasLayer Shop
-  CanvasLayer Pause
+Title (Control)             scenes/boot/title.tscn
+Game (Node3D)               scenes/gym/gym.tscn
+  EnvMount                  gym_env.glb loaded at runtime
+  StationsMount             gym_stations.glb, EMP_Station_* empties
+  Props                     built in code by gym_world.gd
+  Player (CharacterBody3D)  scenes/player/player.tscn
+    CollisionShape3D          capsule r=0.28 h=1.7
+    Head/Camera3D             first person, eye height 1.62 m
+      FPView                  fp_arms.glb, posed from code
+  CanvasLayer HUD           hud.gd — vitals, prompt, pause, leaderboard, credits
+  CanvasLayer Workout       workout_overlay.gd — the 15 minigames
+  CanvasLayer Shop          shop_panel.gd
 ```
+
+Autoloads, in order: `Loc`, `GameState`, `YandexSDK`, `Audio`. Audio is last because
+it only touches `AudioServer` in `_ready`; the other three are readable by then.
 
 ## Movement
 

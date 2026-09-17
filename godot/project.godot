@@ -15,6 +15,10 @@ Loc="*res://scripts/autoload/loc.gd"
 GameState="*res://scripts/autoload/game_state.gd"
 YandexSDK="*res://scripts/yandex/yandex_sdk.gd"
 
+; Audio comes last: it only talks to AudioServer at _ready, so it never reaches
+; for a singleton that has not entered the tree yet.
+Audio="*res://scripts/autoload/audio.gd"
+
 [display]
 window/size/viewport_width=1280
 window/size/viewport_height=720
@@ -80,7 +84,10 @@ renderer/rendering_method="gl_compatibility"
 renderer/rendering_method.mobile="gl_compatibility"
 gl_compatibility/driver="opengl3"
 gl_compatibility/driver.windows="opengl3"
+; Both presets request VRAM compression (web: desktop+mobile, Windows: S3TC),
+; so both formats have to be imported or Godot warns and ships uncompressed.
 textures/vram_compression/import_etc2_astc=true
+textures/vram_compression/import_s3tc_bptc=true
 textures/canvas_textures/default_texture_filter=1
 textures/default_filters/anisotropic_filtering_level=2
 anti_aliasing/quality/msaa_3d=2

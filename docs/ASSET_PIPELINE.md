@@ -30,12 +30,10 @@ Script is idempotent: clears `COL_Kachalka` contents and rebuilds.
 | scene | units, collections, world, ref human |
 | materials | MAT_* library |
 | environment | 16×12 shell, mirrors, neon sign, mats |
-| stations | 5 machines + EMP_Station_* |
+| stations | 15 machines + shop, EMP_Station_* |
 | dressing | fridge, cooler, posters, plates |
-| hero | SK_Hero + ARM_Hero |
-| animation | AN_* clips at 30 fps |
 | collision | *-colonly / *-convcolonly |
-| export | 3 GLB + copy to Godot |
+| export | 2 GLB + copy to Godot |
 | report | tri counts printed |
 
 ## Import in Godot

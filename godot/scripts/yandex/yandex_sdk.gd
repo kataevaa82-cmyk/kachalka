@@ -7,6 +7,8 @@ signal resume_requested
 signal rewarded_done(success: bool)
 signal interstitial_done
 signal cloud_loaded(data: Dictionary)
+signal device_resolved(mobile: bool)
+signal leaderboard_loaded(entries: Array, own_rank: int)
 
 var sdk_ready: bool = false
 var _web: bool = false
@@ -23,6 +25,8 @@ var _cloud_resolved: bool = false
 var _cloud_last_sent_ms: int = -1
 var _cloud_flush_scheduled: bool = false
 var _ad_active: bool = false
+## -1 until deviceInfo answers; the touchscreen probe is only the guess before that.
+var _device_mobile: int = -1
 
 ## player.setData is rate-limited; a set end can trigger several saves within a second.
 const CLOUD_MIN_INTERVAL_MS := 3000
@@ -32,6 +36,7 @@ var _window: Variant
 var _pause_callback: Variant
 var _resume_callback: Variant
 var _cloud_callback: Variant
+var _leaderboard_callback: Variant
 
 
 func _ready() -> void:
@@ -52,6 +57,7 @@ func _inject() -> void:
 		window._kach.pause = function(){};
 		window._kach.resume = function(){};
 		window._kach.cloud = function(_json){};
+		window._kach.leaderboard = function(_json){};
 	""", true)
 	_bind_callbacks()
 	JavaScriptBridge.eval("""
@@ -109,6 +115,7 @@ func _bind_callbacks() -> void:
 	_window = JavaScriptBridge.get_interface("window")
 	if _window == null:
 		return
+	_leaderboard_callback = JavaScriptBridge.create_callback(_on_js_leaderboard)
 	_pause_callback = JavaScriptBridge.create_callback(_on_js_pause)
 	_resume_callback = JavaScriptBridge.create_callback(_on_js_resume)
 	_cloud_callback = JavaScriptBridge.create_callback(_on_js_cloud)
@@ -117,6 +124,7 @@ func _bind_callbacks() -> void:
 		bridge.pause = _pause_callback
 		bridge.resume = _resume_callback
 		bridge.cloud = _cloud_callback
+		bridge.leaderboard = _leaderboard_callback
 
 
 func _poll_ready() -> void:
@@ -131,6 +139,7 @@ func _poll_ready() -> void:
 		var lang: Variant = JavaScriptBridge.eval("(window.ysdk && ysdk.environment && ysdk.environment.i18n && ysdk.environment.i18n.lang) || ''", true)
 		if str(lang) != "":
 			Loc.set_language(str(lang))
+		_resolve_device()
 		inited.emit()
 		_flush_loading_ready()
 		_sync_gameplay()
@@ -141,6 +150,26 @@ func _poll_ready() -> void:
 		inited.emit()
 	else:
 		get_tree().create_timer(0.2).timeout.connect(_poll_ready)
+
+
+## Requirement: mobile layout must follow the platform, not a touchscreen probe.
+## A Windows laptop with a touch panel is a desktop player and needs mouse look.
+func _resolve_device() -> void:
+	var kind: Variant = JavaScriptBridge.eval(
+		"(window.ysdk && ysdk.deviceInfo && ysdk.deviceInfo.type) || ''", true)
+	var kind_name := str(kind).to_lower()
+	if kind_name == "":
+		return
+	_device_mobile = 1 if kind_name == "mobile" or kind_name == "tablet" else 0
+	device_resolved.emit(_device_mobile == 1)
+
+
+## True on phones and tablets. Before the SDK answers (and off-platform) this
+## falls back to the touchscreen probe.
+func is_mobile_device() -> bool:
+	if _device_mobile >= 0:
+		return _device_mobile == 1
+	return DisplayServer.is_touchscreen_available()
 
 
 func _on_js_pause(_args: Array) -> void:
@@ -205,6 +234,16 @@ func is_ad_active() -> bool:
 	return _ad_active
 
 
+## Yandex requires the game to be silent and stopped while an ad is on screen.
+func _set_ad_active(on: bool) -> void:
+	_ad_active = on
+	if on:
+		Audio.hold_mute("ad")
+	else:
+		Audio.release_mute("ad")
+	_sync_gameplay()
+
+
 func _wait_for_sdk() -> bool:
 	if sdk_ready:
 		return true
@@ -219,14 +258,15 @@ func _wait_for_sdk() -> bool:
 
 func show_interstitial() -> void:
 	if not _web:
+		_set_ad_active(true)
 		await get_tree().create_timer(0.35).timeout
+		_set_ad_active(false)
 		interstitial_done.emit()
 		return
 	if not await _wait_for_sdk():
 		interstitial_done.emit()
 		return
-	_ad_active = true
-	_sync_gameplay()
+	_set_ad_active(true)
 	JavaScriptBridge.eval("window._kach.interstitial = false;", true)
 	JavaScriptBridge.eval("""
 		try {
@@ -247,21 +287,21 @@ func show_interstitial() -> void:
 		if bool(done):
 			break
 	JavaScriptBridge.eval("window._kach.interstitial = false;", true)
-	_ad_active = false
-	_sync_gameplay()
+	_set_ad_active(false)
 	interstitial_done.emit()
 
 
 func show_rewarded() -> bool:
 	if not _web:
+		_set_ad_active(true)
 		await get_tree().create_timer(0.4).timeout
+		_set_ad_active(false)
 		rewarded_done.emit(true)
 		return true
 	if not await _wait_for_sdk():
 		rewarded_done.emit(false)
 		return false
-	_ad_active = true
-	_sync_gameplay()
+	_set_ad_active(true)
 	JavaScriptBridge.eval("window._kach.reward = false; window._kach.rewardClosed = false;", true)
 	JavaScriptBridge.eval("""
 		try {
@@ -284,8 +324,7 @@ func show_rewarded() -> bool:
 			result = bool(JavaScriptBridge.eval("!!window._kach.reward", true))
 			break
 	JavaScriptBridge.eval("window._kach.reward = false; window._kach.rewardClosed = false;", true)
-	_ad_active = false
-	_sync_gameplay()
+	_set_ad_active(false)
 	rewarded_done.emit(result)
 	return result
 
@@ -310,6 +349,64 @@ func _flush_score() -> void:
 			} else { send(); }
 		}
 	""" % score, true)
+
+
+func _on_js_leaderboard(args: Array) -> void:
+	var entries: Array = []
+	var own_rank := -1
+	if not args.is_empty():
+		var parsed: Variant = JSON.parse_string(str(args[0]))
+		if parsed is Dictionary:
+			var d: Dictionary = parsed
+			var rows_v: Variant = d.get("rows", [])
+			if rows_v is Array:
+				entries = rows_v
+			own_rank = int(d.get("rank", -1))
+	leaderboard_loaded.emit(entries, own_rank)
+
+
+## Fetches the top of the `mass` board plus the player's own row when they have one.
+func load_leaderboard() -> void:
+	if not _web or not sdk_ready:
+		leaderboard_loaded.emit([], -1)
+		return
+	JavaScriptBridge.eval("""
+		(function(){
+			var done = function(rows, rank){
+				window._kach.leaderboard(JSON.stringify({ rows: rows || [], rank: rank }));
+			};
+			if (!window.ysdk || !window.ysdk.leaderboards) { done([], -1); return; }
+			var lb = window.ysdk.leaderboards;
+			lb.getEntries('mass', { quantityTop: 10, includeUser: true, quantityAround: 0 })
+				.then(function(res){
+					var rows = (res.entries || []).map(function(e){
+						return {
+							rank: e.rank,
+							score: e.score,
+							name: (e.player && e.player.publicName) || ''
+						};
+					});
+					var mine = -1;
+					if (res.userRank) { mine = res.userRank; }
+					done(rows, mine);
+				})
+				.catch(function(){ done([], -1); });
+		})();
+	""", true)
+
+
+## Yandex only records a score for a signed-in player. Called from the leaderboard
+## panel, never automatically: an unprompted login dialog is a moderation finding.
+func open_auth_dialog() -> void:
+	if not _web or not sdk_ready:
+		return
+	JavaScriptBridge.eval("""
+		if (window.ysdk && window.ysdk.auth && window.ysdk.auth.openAuthDialog) {
+			window.ysdk.auth.openAuthDialog().then(function(){
+				window._kach.playerPromise = null;
+			}).catch(function(){});
+		}
+	""", true)
 
 
 func cloud_save(data: Dictionary) -> void:

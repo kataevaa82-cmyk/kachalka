@@ -28,7 +28,7 @@ Stylized **low-poly** gym, readable silhouettes, saturated night-gym palette (ch
 
 | Asset | Tris | Texture |
 |-------|------|---------|
-| SK_Hero | 1 500–3 000 | solid PBR, no maps |
+| FP arms (`fp_arms.glb`) | 1 500–3 000 | solid PBR, no maps |
 | Gym shell (floor/walls/ceiling) | 2 000–4 000 | solid + vertex color |
 | Station (each) | 200–800 | solid PBR |
 | Set dressing prop | 50–300 | solid PBR |
@@ -82,9 +82,9 @@ Stylized **low-poly** gym, readable silhouettes, saturated night-gym palette (ch
 
 1. Units metric, collections `COL_*`, scale ref 1.75 m
 2. Gym shell on 2 m grid (16 × 12 × 4.2 m)
-3. Five stations + dressing
-4. Hero mesh + `ARM_Hero` + clips
+3. Fifteen stations + shop + dressing
+4. First-person arms (`fp_arms.glb`, WRAD CC0)
 5. Collision + station empties
 6. Viewport QA screenshots (front, side, top, gameplay camera)
-7. Export `gym_env.glb`, `gym_stations.glb`, `sk_hero.glb`
+7. Export `gym_env.glb`, `gym_stations.glb`
 8. Copy into `godot/assets/models/`

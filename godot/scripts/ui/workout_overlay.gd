@@ -900,6 +900,10 @@ func _score(grade: String) -> void:
 	elif grade == "miss":
 		_misses += 1
 	var res: Dictionary = GameState.apply_rep(_sid, grade)
+	Audio.play_rep(grade, GameState.combo)
+	if grade != "miss":
+		# A rep also makes a noise in the room: iron, a light machine, or footfalls.
+		Audio.play(_rep_sfx(), randf_range(0.93, 1.08), -5.0)
 	match grade:
 		"perfect":
 			grade_label.text = tr("ИДЕАЛЬНО  +%d₽") % int(res.get("cash", 0))
@@ -920,11 +924,11 @@ func _score(grade: String) -> void:
 	_refresh_reps()
 	if _misses >= 3:
 		GameState.note_set(_sid, _perfects, _misses, _reps_done, false)
-		_close(tr("Сет сорван. Три мимо."))
+		_close(tr("Сет сорван. Три мимо."), false)
 		return
 	if _reps_done >= _reps_total:
 		GameState.note_set(_sid, _perfects, _misses, _reps_done, true)
-		_close(tr("Сет закрыт. Идеальных: %d") % _perfects)
+		_close(tr("Сет закрыт. Идеальных: %d") % _perfects, true)
 
 
 func _grade_after_gear(grade: String) -> String:
@@ -964,7 +968,19 @@ func _unhandled_input(event: InputEvent) -> void:
 		_simon_press(3)
 
 
-func _close(msg: String) -> void:
+## Heavy iron, light machine or treadmill — the rep should sound like the station.
+func _rep_sfx() -> String:
+	match _sid:
+		"bench", "squat", "legpress", "deadlift":
+			return "plate"
+		"treadmill", "rower", "bike":
+			return "step"
+		_:
+			return "clank"
+
+
+func _close(msg: String, success: bool) -> void:
+	Audio.play("setdone" if success else "setfail")
 	_lock_input = true
 	hint.text = msg
 	# Respect pause: a platform pause right after the last rep must not end the set behind the menu.

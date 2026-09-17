@@ -1,17 +1,52 @@
 import { createServer } from "node:http";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { globSync, statSync } from "node:fs";
+import { platform, tmpdir } from "node:os";
 import { dirname, extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..", "godot", "export", "web");
-const chromePath = "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe";
+// CHROME_PATH wins; otherwise take the first Chrome/Chromium this OS actually has.
+const chromeCandidates = {
+  win32: [
+    "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
+    "C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe",
+  ],
+  darwin: [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+  ],
+  linux: [
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/chromium",
+    // Playwright-managed browsers (CI images ship these under a versioned dir).
+    ...globSync("/opt/pw-browsers/chromium-*/chrome-linux/chrome"),
+  ],
+};
+const isExecutable = (candidate) => {
+  try {
+    return statSync(candidate).isFile();
+  } catch {
+    return false;
+  }
+};
+const chromePath = process.env.CHROME_PATH
+  || (chromeCandidates[platform()] ?? []).find(isExecutable);
+if (!chromePath) {
+  console.error(`No Chrome found for ${platform()}. Set CHROME_PATH to the browser binary.`);
+  process.exit(2);
+}
 const debugPort = 9223;
+if (!statSync(join(root, "index.html"), { throwIfNoEntry: false })?.isFile()) {
+  console.error(`No web build at ${root}. Export the YandexGamesWeb preset first.`);
+  process.exit(2);
+}
 let pagePort = 0;
 const sdkStub = `
-window.__sdkCalls = { loading: 0, starts: 0, stops: 0, cloudGets: 0, cloudSets: 0, scores: 0 };
+window.__sdkCalls = { loading: 0, starts: 0, stops: 0, cloudGets: 0, cloudSets: 0, scores: 0, boardReads: 0 };
 window.__sdkEvents = {};
 window.YaGames = {
   init: async () => ({
@@ -34,12 +69,20 @@ window.YaGames = {
         setTimeout(() => callbacks?.onClose?.(true), 120);
       },
     },
+    deviceInfo: { type: "desktop", isDesktop: () => true, isMobile: () => false, isTablet: () => false, isTV: () => false },
+    auth: { openAuthDialog: async () => {} },
     getPlayer: async () => ({
       getData: async () => { window.__sdkCalls.cloudGets += 1; return {}; },
       setData: async () => { window.__sdkCalls.cloudSets += 1; },
     }),
     isAvailableMethod: async () => true,
-    leaderboards: { setScore: async () => { window.__sdkCalls.scores += 1; } },
+    leaderboards: {
+      setScore: async () => { window.__sdkCalls.scores += 1; },
+      getEntries: async () => {
+        window.__sdkCalls.boardReads += 1;
+        return { entries: [{ rank: 1, score: 812, player: { publicName: 'Zhelezo' } }], userRank: 0 };
+      },
+    },
   }),
 };`;
 const mime = {

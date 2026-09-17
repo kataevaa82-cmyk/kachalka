@@ -47,7 +47,6 @@ Follows Blender Director prefixes. No spaces, no Cyrillic in file or object name
 blender/kachalka_gym.blend
 blender/export/gym_env.glb
 blender/export/gym_stations.glb
-blender/export/sk_hero.glb
 godot/assets/models/*.glb
 ```
 

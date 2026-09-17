@@ -12,20 +12,17 @@ const TOUCH_SENS := 0.004
 const PITCH_MIN := deg_to_rad(-85.0)
 const PITCH_MAX := deg_to_rad(85.0)
 const EYE_HEIGHT := 1.62
+const STEP_STRIDE := 1.05
 
 @onready var head: Node3D = $Head
 @onready var cam: Camera3D = $Head/Camera3D
-@onready var mount: Node3D = $MeshMount
 
 var stick: Vector2 = Vector2.ZERO
+var _step_dist: float = 0.0
 var locked: bool = false:
 	set(v):
 		locked = v
 		_sync_mouse()
-var _hero: Node3D
-var _anim: AnimationPlayer
-var _skel: Skeleton3D
-var _current_clip: String = ""
 var _look_touch_id: int = -1
 var _pitch: float = 0.0
 var _fp: Node3D
@@ -39,13 +36,11 @@ var _base_head_y: float = EYE_HEIGHT
 var _fp_from_glb: bool = false
 var _fp_scale: float = 1.0
 var _fp_vm: bool = false
-var _fp_skel: Skeleton3D
 
 
 func _ready() -> void:
 	cam.current = true
 	cam.near = 0.03
-	mount.visible = false
 	_ensure_fp()
 	if _fp:
 		_fp.visible = true
@@ -53,17 +48,6 @@ func _ready() -> void:
 	GameState.stats_changed.connect(_apply_muscles)
 	_apply_muscles()
 	_sync_mouse()
-
-
-func _spawn_hero() -> void:
-	_hero = GltfRuntime.load_node("res://assets/models/sk_hero.glb")
-	if _hero == null:
-		return
-	mount.add_child(_hero)
-	_hero.position = Vector3.ZERO
-	_anim = _find_anim(_hero)
-	_skel = _find_skel(_hero)
-	_play("AN_Idle")
 
 
 func _physics_process(delta: float) -> void:
@@ -96,11 +80,22 @@ func _physics_process(delta: float) -> void:
 	velocity.z = move_toward(velocity.z, target.z, ACCEL * delta)
 	move_and_slide()
 
-	if wish.length() > 0.15:
-		_play("AN_Walk")
-	else:
-		_play("AN_Idle")
+	_footsteps(delta)
 	_animate_fp_idle(delta)
+
+
+## One step per ~1.05 m of ground covered, so the cadence follows actual speed.
+func _footsteps(delta: float) -> void:
+	if not is_on_floor():
+		return
+	var ground := Vector2(velocity.x, velocity.z).length()
+	if ground < 0.4:
+		_step_dist = STEP_STRIDE * 0.55
+		return
+	_step_dist += ground * delta
+	if _step_dist >= STEP_STRIDE:
+		_step_dist -= STEP_STRIDE
+		Audio.play("step", randf_range(0.88, 1.14), -4.0)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -109,7 +104,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		_look(event.relative)
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if not locked and not DisplayServer.is_touchscreen_available():
+		if not locked and not GameState.is_touch():
 			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 
@@ -130,10 +125,6 @@ func _sync_mouse() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	else:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-
-
-func play_station(clip: String) -> void:
-	_play(clip)
 
 
 func begin_workout(sid: String) -> void:
@@ -186,8 +177,6 @@ func begin_workout(sid: String) -> void:
 			_pitch = deg_to_rad(-4.0)
 	head.position.y = _base_head_y
 	head.rotation.x = _pitch
-	var clip := str(GameState.stations.get(sid, {}).get("anim", "AN_Idle"))
-	_play(clip)
 
 
 func end_workout() -> void:
@@ -201,7 +190,6 @@ func end_workout() -> void:
 	cam.h_offset = 0.0
 	cam.v_offset = 0.0
 	locked = false
-	_play("AN_Idle")
 	_animate_fp_idle(0.0)
 
 
@@ -237,7 +225,6 @@ func _ensure_fp() -> void:
 			cam.add_child(_fp)
 			_fp_from_glb = true
 			_fp_vm = true
-			_fp_skel = _find_skel(_fp)
 			_arm_l = _fp
 			_arm_r = _fp
 			_fp.position = Vector3(0.0, -0.04, 0.02)
@@ -543,29 +530,6 @@ func _pose_arm(side: float, pos: Vector3, rot: Vector3) -> void:
 	n.scale = Vector3(s, s, s)
 
 
-func _play(clip: String) -> void:
-	if _anim == null or clip == _current_clip:
-		return
-	var resolved := _resolve_clip(clip)
-	if resolved == "":
-		return
-	_current_clip = clip
-	_anim.play(resolved)
-
-
-func _resolve_clip(clip: String) -> String:
-	if _anim == null:
-		return ""
-	if _anim.has_animation(clip):
-		return clip
-	for lib_name in _anim.get_animation_library_list():
-		var lib: AnimationLibrary = _anim.get_animation_library(lib_name)
-		for n in lib.get_animation_list():
-			if n == clip or n.ends_with(clip) or clip in n:
-				return ("%s/%s" % [lib_name, n]) if lib_name != "" else n
-	return ""
-
-
 func _apply_muscles() -> void:
 	if _fp_vm and _fp:
 		var vs := 1.0 + 0.32 * (1.0 - exp(-GameState.arms / 80.0))
@@ -576,41 +540,3 @@ func _apply_muscles() -> void:
 			_arm_l.scale = Vector3(arm_s, arm_s, arm_s)
 		if _arm_r:
 			_arm_r.scale = Vector3(arm_s, arm_s, arm_s)
-	if _skel == null:
-		return
-	var a := 1.0 + 0.85 * (1.0 - exp(-GameState.arms / 70.0))
-	var c := 1.0 + 0.70 * (1.0 - exp(-GameState.chest / 70.0))
-	var l := 1.0 + 0.80 * (1.0 - exp(-GameState.legs / 70.0))
-	var b := 1.0 + 0.55 * (1.0 - exp(-GameState.back / 70.0))
-	_scale_bone("UpperArm_L", Vector3(a, 1.0, a))
-	_scale_bone("UpperArm_R", Vector3(a, 1.0, a))
-	_scale_bone("Chest", Vector3(c, 1.0, b))
-	_scale_bone("UpperLeg_L", Vector3(l, 1.0, l))
-	_scale_bone("UpperLeg_R", Vector3(l, 1.0, l))
-
-
-func _scale_bone(bone_name: String, s: Vector3) -> void:
-	var idx := _skel.find_bone(bone_name)
-	if idx < 0:
-		return
-	_skel.set_bone_pose_scale(idx, s)
-
-
-func _find_anim(n: Node) -> AnimationPlayer:
-	if n is AnimationPlayer:
-		return n
-	for c in n.get_children():
-		var f := _find_anim(c)
-		if f:
-			return f
-	return null
-
-
-func _find_skel(n: Node) -> Skeleton3D:
-	if n is Skeleton3D:
-		return n
-	for c in n.get_children():
-		var f := _find_skel(c)
-		if f:
-			return f
-	return null
