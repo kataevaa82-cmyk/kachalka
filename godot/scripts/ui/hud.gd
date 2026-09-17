@@ -41,6 +41,9 @@ const CREDITS_LINES := [
 var _quote_ttl: float = 0.0
 var _ad_busy: bool = false
 var _board_open: bool = false
+## The desktop quest-panel box as the scene authored it. Phone layout shrinks it,
+## and leaving phone layout has to put back these numbers rather than invented ones.
+var _quests_desktop_rect := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -62,6 +65,8 @@ func _ready() -> void:
 	if pause_btn:
 		pause_btn.pressed.connect(_on_pause_btn)
 	board.visible = false
+	var quests: Control = $Root/Quests
+	_quests_desktop_rect = Vector2(quests.offset_right, quests.offset_bottom)
 	YandexSDK.leaderboard_loaded.connect(_on_board_loaded)
 	# deviceInfo lands after the SDK handshake, so the mobile layout has to be
 	# able to rebuild itself rather than being decided once at _ready.
@@ -177,8 +182,8 @@ func _layout_phone() -> void:
 	var phone := touch and w < 980.0
 	var q: Control = $Root/Quests
 	if q:
-		q.offset_right = 250.0 if phone else 330.0
-		q.offset_bottom = 210.0 if phone else 260.0
+		q.offset_right = 250.0 if phone else _quests_desktop_rect.x
+		q.offset_bottom = 210.0 if phone else _quests_desktop_rect.y
 		q.modulate.a = 0.82 if phone else 1.0
 	if pause_btn:
 		pause_btn.visible = touch or OS.has_feature("web")

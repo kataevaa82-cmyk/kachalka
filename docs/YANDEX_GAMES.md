@@ -41,9 +41,14 @@ Official requirements used for this project (HTML5).
 - Age rating: **12+**. The shop sells a pre-workout supplement; nothing else in the build touches a rating trigger.
 - Name in the console must match the in-game title: **Качалка: ещё один повтор** / **Kachalka: one more rep**.
 
-## Store media (11.09.2026)
+## Store media (re-recorded 17.09.2026)
 
 Prepared package: `marketing/yandex/preview.html`, `marketing/Kachalka_Yandex_Media.zip`.
+Re-recorded from the current build with `marketing/source/capture_all.sh` (Godot 4.7.1,
+Xvfb + Mesa software rasteriser on a headless box). The gameplay clips now carry the
+game's own synthesised audio, which Movie Maker writes alongside the frames; the field
+limits themselves were last checked against the Yandex docs on 11.09.2026 and were not
+re-read for this pass.
 Copy the exact per-language fields from `marketing/yandex/{ru,en}/texts.txt` or `metadata.json`.
 The title scene and web shell use the new name; the internal Godot project name stays unchanged to preserve the existing save directory.
 Media sizes and copy limits were checked against https://yandex.ru/dev/games/doc/ru/console/add-new-game/draft (the page was accessible during this media task).

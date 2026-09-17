@@ -287,7 +287,13 @@ func _check_state_regressions() -> void:
 		{"id": "reps30", "title": "Тридцатка", "type": "reps", "station": "", "target": 30, "progress": 0},
 		{"id": "bench3", "title": "Жимовая серия", "type": "sets", "station": "bench", "target": 3, "progress": 1},
 	]
-	if not str(state.quest_hint_for("bench")).begins_with("Жимовая серия"):
+	# quest_hint_for translates, and the boot locale follows the host machine — pin
+	# Russian so this asserts the shadowing rule, not the developer's system language.
+	var hint_locale := TranslationServer.get_locale()
+	TranslationServer.set_locale("ru")
+	var station_hint := str(state.quest_hint_for("bench"))
+	TranslationServer.set_locale(hint_locale)
+	if not station_hint.begins_with("Жимовая серия"):
 		_errors.append("REGRESSION_STATION_QUEST_HINT_SHADOWED")
 	state.money = 200
 	state.inv = {"belt": true}

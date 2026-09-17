@@ -1,5 +1,6 @@
 {
   "checked_on": "2026-09-11",
+  "generated_on": "2026-09-17",
   "source": "https://yandex.ru/dev/games/doc/ru/console/add-new-game/draft",
   "images": [
     {
@@ -21,56 +22,56 @@
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 261534
+      "bytes": 267536
     },
     {
       "file": "ru/screenshots_desktop/02_explore.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 202071
+      "bytes": 205710
     },
     {
       "file": "ru/screenshots_desktop/03_bench.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 227934
+      "bytes": 235284
     },
     {
       "file": "ru/screenshots_desktop/04_progress.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 186751
+      "bytes": 187668
     },
     {
       "file": "ru/screenshots_mobile/01_dumbbells.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 248827
+      "bytes": 261176
     },
     {
       "file": "ru/screenshots_mobile/02_explore.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 208821
+      "bytes": 212143
     },
     {
       "file": "ru/screenshots_mobile/03_bench.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 231304
+      "bytes": 230775
     },
     {
       "file": "ru/screenshots_mobile/04_progress.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 192430
+      "bytes": 196079
     },
     {
       "file": "en/cover_800x470.png",
@@ -84,56 +85,56 @@
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 253387
+      "bytes": 256578
     },
     {
       "file": "en/screenshots_desktop/02_explore.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 197947
+      "bytes": 200019
     },
     {
       "file": "en/screenshots_desktop/03_bench.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 225232
+      "bytes": 228252
     },
     {
       "file": "en/screenshots_desktop/04_progress.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 183346
+      "bytes": 184171
     },
     {
       "file": "en/screenshots_mobile/01_dumbbells.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 235149
+      "bytes": 248329
     },
     {
       "file": "en/screenshots_mobile/02_explore.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 200484
+      "bytes": 205256
     },
     {
       "file": "en/screenshots_mobile/03_bench.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 221356
+      "bytes": 233836
     },
     {
       "file": "en/screenshots_mobile/04_progress.png",
       "width": 1280,
       "height": 720,
       "format": "RGB PNG 24-bit",
-      "bytes": 185051
+      "bytes": 189382
     }
   ],
   "videos": [
@@ -145,8 +146,10 @@
       "codec": "h264",
       "pixel_format": "yuv420p",
       "duration_seconds": 24.0,
-      "audio": [],
-      "bytes": 10316623
+      "audio": [
+        "aac"
+      ],
+      "bytes": 11810390
     },
     {
       "file": "ru/trailer_24s.mp4",
@@ -159,7 +162,7 @@
       "audio": [
         "aac"
       ],
-      "bytes": 10376268
+      "bytes": 11362033
     },
     {
       "file": "en/gameplay_24s.mp4",
@@ -169,8 +172,10 @@
       "codec": "h264",
       "pixel_format": "yuv420p",
       "duration_seconds": 24.0,
-      "audio": [],
-      "bytes": 10066071
+      "audio": [
+        "aac"
+      ],
+      "bytes": 11459312
     },
     {
       "file": "en/trailer_24s.mp4",
@@ -183,7 +188,7 @@
       "audio": [
         "aac"
       ],
-      "bytes": 10109600
+      "bytes": 10936926
     }
   ],
   "text_lengths": {

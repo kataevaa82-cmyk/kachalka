@@ -1,6 +1,8 @@
 """Encode the in-engine recordings and an original, synthesized trailer soundtrack.
 
-No third-party music or generated gameplay frames are used. Requires ffmpeg.
+The gameplay clip keeps the audio Godot recorded with the frames. The trailer gets
+a separate promo loop built here, so captions and music can be paced for the store
+card. No third-party music or generated gameplay frames are used. Requires ffmpeg.
 Run from any directory after capture.gd has recorded both languages.
 """
 from pathlib import Path
@@ -43,13 +45,30 @@ def make_soundtrack():
     return path
 
 
+# Arial Bold on Windows; Liberation Sans Bold is the metric-compatible stand-in
+# elsewhere, and DejaVu is the fallback. All three cover Cyrillic.
+CAPTION_FONTS = [
+    "C:/Windows/Fonts/arialbd.ttf",
+    "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Bold.ttf",
+]
+
+
+def caption_font():
+    for candidate in CAPTION_FONTS:
+        if Path(candidate).exists():
+            return candidate
+    raise SystemExit("No bold Cyrillic font found for captions; add one to CAPTION_FONTS.")
+
+
 def run(args):
     subprocess.run(["ffmpeg", "-hide_banner", "-loglevel", "error", "-y", *map(str, args)], cwd=WORK, check=True)
 
 
 def main():
     soundtrack = make_soundtrack()
-    shutil.copyfile("C:/Windows/Fonts/arialbd.ttf", WORK / "font.ttf")
+    shutil.copyfile(caption_font(), WORK / "font.ttf")
     captions = {
         "ru": ["Поймай идеальный повтор", "15 тренажёров. Найди свой ритм.", "Позже: Кузница титанов. Темп выше.", "6 уровней. Как далеко дойдёшь?", "Качалка: ещё один повтор"],
         "en": ["Time your perfect rep", "15 stations. Find your rhythm.", "Later: Titan Forge. Faster timing.", "6 tiers. How far will you go?", "Kachalka: one more rep"],
@@ -60,7 +79,11 @@ def main():
         dest = OUT / lang
         codec = ["-c:v", "libx264", "-preset", "fast", "-crf", "19", "-pix_fmt", "yuv420p", "-color_range", "tv", "-r", "30", "-movflags", "+faststart", "-t", "24"]
         color_conversion = "scale=in_range=pc:out_range=tv,format=yuv420p"
-        run(["-i", source, "-map", "0:v:0", "-an", "-vf", color_conversion, *codec, dest / "gameplay_24s.mp4"])
+        # The gameplay clip keeps the engine's own recording: Movie Maker writes the
+        # game's synthesised music and SFX straight into the AVI, so the store video
+        # sounds like the build does.
+        run(["-i", source, "-map", "0:v:0", "-map", "0:a:0", "-vf", color_conversion,
+             *codec, "-c:a", "aac", "-b:a", "160k", "-ac", "2", dest / "gameplay_24s.mp4"])
         filters = [color_conversion, "drawbox=x=0:y=655:w=iw:h=65:color=0x080d14@0.9:t=fill"]
         for i, (caption, (start, end)) in enumerate(zip(captions[lang], intervals)):
             filename = f"caption_{lang}_{i}.txt"

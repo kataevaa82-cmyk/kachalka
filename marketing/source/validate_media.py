@@ -1,11 +1,16 @@
 """Validate final assets against the recorded Yandex Games submission limits."""
 from pathlib import Path
+import datetime
 import json
 import struct
 import subprocess
 
 ROOT = Path(__file__).resolve().parents[1] / "yandex"
-report = {"checked_on": "2026-09-11", "source": "https://yandex.ru/dev/games/doc/ru/console/add-new-game/draft", "images": [], "videos": [], "text_lengths": {}}
+# checked_on is when the limits below were last read off the Yandex docs page;
+# generated_on is when these files were produced. They are not the same claim.
+report = {"checked_on": "2026-09-11", "generated_on": datetime.date.today().isoformat(),
+          "source": "https://yandex.ru/dev/games/doc/ru/console/add-new-game/draft",
+          "images": [], "videos": [], "text_lengths": {}}
 
 
 def check_png(path, size):
@@ -47,7 +52,9 @@ for lang in ["ru", "en"]:
         assert abs(duration - 24) < 0.1 and duration <= 28
         assert path.stat().st_size < 100_000_000
         audio = [s["codec_name"] for s in probe["streams"] if s["codec_type"] == "audio"]
-        assert audio == (["aac"] if stem == "trailer" else [])
+        # Both clips carry sound now: the gameplay one the engine's own recording,
+        # the trailer its promo loop.
+        assert audio == ["aac"], (path, audio)
         report["videos"].append({"file": path.relative_to(ROOT).as_posix(), "width": 1280, "height": 720, "fps": 30, "codec": "h264", "pixel_format": "yuv420p", "duration_seconds": duration, "audio": audio, "bytes": path.stat().st_size})
 report["status"] = "PASS"
 (ROOT / "validation.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

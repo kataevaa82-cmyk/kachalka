@@ -414,11 +414,18 @@ func _build_lights() -> void:
 	add_child(we)
 	_level_sign = Label3D.new()
 	_level_sign.name = "LevelSign"
-	_level_sign.position = Vector3(0.0, 3.25, -4.92)
-	_level_sign.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+	# Sits on the far wall like a real gym sign. It used to billboard, which swung
+	# the wide two-line text through the board mesh whenever the player stood off
+	# to one side and left the wall slicing the text in half.
+	_level_sign.position = Vector3(0.0, 3.25, -4.84)
+	_level_sign.billboard = BaseMaterial3D.BILLBOARD_DISABLED
 	_level_sign.font_size = 44
 	_level_sign.pixel_size = 0.0042
 	_level_sign.outline_size = 10
+	# Without a width the rule renders as one long line that overhangs the board.
+	_level_sign.width = 820.0
+	_level_sign.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_level_sign.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_level_sign.modulate = Color(0.15, 0.85, 0.95)
 	add_child(_level_sign)
 	var cam: Camera3D = player.get_node_or_null("Head/Camera3D")

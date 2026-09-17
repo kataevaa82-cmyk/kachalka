@@ -7,7 +7,11 @@ var last_hit := -100
 var lang := "ru"
 var quick := false
 var mobile := false
-var out_dir := "C:/kach/marketing/yandex/ru/screenshots_desktop"
+## Absolute path to marketing/yandex, handed in as `out=<path>`. No host-specific
+## default: the capture script always passes it, and a wrong guess would silently
+## write screenshots nowhere.
+var out_root := ""
+var out_dir := ""
 
 func _ready() -> void:
 	seed(42)
@@ -15,9 +19,16 @@ func _ready() -> void:
 		if arg == "en": lang = "en"
 		if arg == "quick": quick = true
 		if arg == "mobile": mobile = true
+		if arg.begins_with("out="): out_root = arg.substr(4)
+	if out_root == "":
+		push_error("CAPTURE: missing out=<path to marketing/yandex>")
+		get_tree().quit(2)
+		return
 	Loc.set_language(lang)
-	out_dir = "C:/kach/marketing/yandex/" + lang + "/screenshots_desktop"
-	if mobile: out_dir = "C:/kach/marketing/yandex/" + lang + "/screenshots_mobile"
+	if mobile:
+		# Same seam the game uses: deviceInfo decides, so force its answer.
+		YandexSDK.set("_device_mobile", 1)
+	out_dir = out_root + "/" + lang + ("/screenshots_mobile" if mobile else "/screenshots_desktop")
 	DirAccess.make_dir_recursive_absolute(out_dir)
 	gym = load("res://scenes/gym/gym.tscn").instantiate()
 	add_child(gym)
