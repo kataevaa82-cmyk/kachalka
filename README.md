@@ -59,6 +59,20 @@ blender --background --python blender/scripts/convert_fp_arms.py
 
 Windows-сборка: preset **Windows Desktop** → `godot/export/windows/Kachalka.exe`.
 
+## Играбельная сборка на GitHub Pages
+
+`.github/workflows/pages.yml` собирает пресет **YandexGamesWeb** и публикует его страницей.
+Запускается вручную с любой ветки (workflow_dispatch) или сам при пуше в основную ветку.
+
+Перед первым запуском включите Pages: **Settings → Pages → Source: GitHub Actions**.
+На приватном репозитории Pages требует платного плана GitHub, на публичном — бесплатны.
+
+Адрес после первого успешного деплоя: `https://<владелец>.github.io/kachalka/`
+
+На Pages нет Яндекс SDK, поэтому `/sdk.js` отдаёт 404: реклама, облачные сохранения и
+таблица рекордов там неактивны, игра сама уходит в офлайн-режим. Всё остальное —
+ходьба, все 15 станков, прогрессия, звук, локальные сохранения — работает.
+
 ## Автопроверки
 
 ```text
