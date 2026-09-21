@@ -314,6 +314,35 @@ func say(text: String) -> void:
 	quote_emitted.emit(tr(text), "prop")
 
 
+## What somebody left in a changing stall. Deliberately small: the booths are a
+## reason to wander the locker room between sets, not a way to skip the gym.
+func loot_booth() -> void:
+	match randi() % 5:
+		0:
+			var cash := randi_range(4, 11)
+			add_money(cash)
+			Audio.play("coin")
+			say("В чужой куртке звякнуло: +%d₽. Хозяин не обеднеет." % cash)
+		1:
+			add_energy(20.0)
+			Audio.play("water", 1.25)
+			say("Чей-то энергетик. Срок годности — примерно.")
+		2:
+			add_energy(8.0)
+			add_recovery(14.0)
+			Audio.play("coin", 1.3, -4.0)
+			say("Батончик под лавкой. Белок есть, совесть молчит.")
+		3:
+			add_hygiene(22.0)
+			Audio.play("back", 1.1)
+			say("Чистое полотенце. Сегодня ты приличный человек.")
+		_:
+			add_fatigue(-14.0)
+			add_recovery(10.0)
+			Audio.play("quest", 1.0, -6.0)
+			say("Пачка соли и записка «не сдавайся». Ладно, не буду.")
+
+
 func use_prop(id: String) -> void:
 	if float(_prop_cd.get(id, 0.0)) > 0.05:
 		Audio.play("deny", 1.0, -6.0)

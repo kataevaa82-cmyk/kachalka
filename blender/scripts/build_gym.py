@@ -1091,7 +1091,8 @@ def phase_dressing(lib):
     box("SM_Dress_WCHeadA", (1.05, 0.04, 0.08), (-7.15, -8.80, 1.95), "COL_Geo_Props", alum)
     box("SM_Dress_WCHeadB", (1.05, 0.04, 0.08), (-7.15, -7.40, 1.95), "COL_Geo_Props", alum)
     kenney_furn("bathroomSink.glb", "SM_Dress_Sink", (-5.35, -9.72, 0.0), "COL_Geo_Props", scale=2.2, rot=(0, 0, math.pi))
-    kenney_furn("bathroomMirror.glb", "SM_Dress_WCMirror", (-5.35, -9.95, 1.20), "COL_Geo_Props", scale=2.0, rot=(0, 0, math.pi))
+    # y puts the frame's back on the wall face (y=-10.0), not 0.1 m inside it.
+    kenney_furn("bathroomMirror.glb", "SM_Dress_WCMirror", (-5.35, -9.8456, 1.20), "COL_Geo_Props", scale=2.0, rot=(0, 0, math.pi))
 
     extra = []
     extra.append(box("SM_Exting", (0.12, 0.12, 0.42), (-3.7, -6.6, 0.28), "COL_Geo_Props", lib["tank"]))
@@ -1110,7 +1111,10 @@ def phase_dressing(lib):
     extra.append(box("SM_WallRail", (1.8, 0.08, 0.10), (13.95, 0.0, 1.15), "COL_Geo_Props", lib["iron"]))
     extra.append(box("SM_ShoeRack", (0.7, 0.22, 0.45), (-9.55, 3.55, 0.25), "COL_Geo_Props", lib["iron"]))
     join_named("SM_Dress_Extra", extra, "COL_Geo_Props")
-    kenney_furn("bathroomMirror.glb", "SM_Dress_MirrorLock", (-10.45, 3.98, 0.85), "COL_Geo_Props", scale=2.8, rot=(0, 0, math.pi))
+    # Hangs on the y=+4.0 wall face, so it faces -Y into the room. The WC mirror
+    # sits on the opposite wall and is the one that needs the half turn, not this
+    # one. y puts the frame's back on the wall rather than buried behind it.
+    kenney_furn("bathroomMirror.glb", "SM_Dress_MirrorLock", (-10.45, 3.788, 0.85), "COL_Geo_Props", scale=2.8)
     dress_sauna(lib)
 
 

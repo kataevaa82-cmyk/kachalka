@@ -66,6 +66,7 @@ var _pause_t: float = 0.0
 var _pause_ready: bool = true
 var _rpm: float = 0.35
 var _rpm_ok: float = 0.0
+var _quit_btn: Button
 
 
 func _ready() -> void:
@@ -167,6 +168,18 @@ func _build_extra_ui() -> void:
 	_pend_board.visible = false
 	_rect(_pend_board, "Apex", Vector2(126, 8), Vector2(28, 22), Color(0.15, 0.85, 0.55, 0.8))
 	_pend_ball = _rect(_pend_board, "Ball", Vector2(128, 20), Vector2(24, 24), Color(1, 0.82, 0.25))
+	_quit_btn = Button.new()
+	_quit_btn.name = "Quit"
+	# FOCUS_NONE or space would double as "rep" and "leave" at the same time.
+	_quit_btn.focus_mode = Control.FOCUS_NONE
+	_quit_btn.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	_quit_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_quit_btn.offset_left = -248.0
+	_quit_btn.offset_top = 40.0
+	_quit_btn.offset_right = -36.0
+	_quit_btn.offset_bottom = 96.0
+	_quit_btn.pressed.connect(quit_set)
+	root.add_child(_quit_btn)
 
 
 func start_set(station_id: String) -> void:
@@ -226,6 +239,7 @@ func _show_mode_ui() -> void:
 	_green2.visible = two
 	hit_btn.visible = _uses_hit()
 	hit_btn.text = _hit_caption()
+	_quit_btn.text = tr("СЛЕЗТЬ") if GameState.is_touch() else tr("СЛЕЗТЬ  ESC")
 	_prompt.text = _prompt_text()
 	for b in _simon_pads:
 		b.visible = _mode == "simon"
@@ -340,6 +354,10 @@ func _layout_touch_play() -> void:
 		var b: Button = _alt_btns[i]
 		b.size = Vector2(300, 124)
 		b.position = Vector2(40 + i * 340, 36)
+	_quit_btn.offset_left = -236.0
+	_quit_btn.offset_top = 28.0
+	_quit_btn.offset_right = -24.0
+	_quit_btn.offset_bottom = 108.0
 
 
 func _process(delta: float) -> void:
@@ -548,11 +566,20 @@ func _tick_pause(delta: float) -> void:
 	if not _pause_ready or not _holding:
 		return
 	_pause_t += delta
-	if _pause_t >= 0.34:
+	if _pause_t >= _pause_need():
 		var g := "perfect" if absf(_phase - 0.5) <= _perfect * 0.5 else "good"
 		_score(g)
 		_pause_t = 0.0
 		_pause_ready = false
+
+
+## Leaving the green zone resets the freeze, so the hold has to fit inside it.
+## A fixed hold could not: the window is only _green * _period seconds wide, and
+## fatigue and the level's period scale shrink it further. Staying under half the
+## window keeps the rep winnable at every difficulty and still leaves the second
+## half as the margin for starting the freeze late.
+func _pause_need() -> float:
+	return minf(_green * _period * 0.45, 0.3)
 
 
 func _tick_rpm(delta: float) -> void:
@@ -950,8 +977,24 @@ func _refresh_reps() -> void:
 	reps_label.text = tr("ПОВТОР  %d / %d") % [_reps_done, _reps_total]
 
 
+## Abandoning a set keeps the reps already banked but not the completion bonus,
+## and the energy spent mounting is gone. Leaving is a way out, not a free reset.
+func quit_set() -> void:
+	if not root.visible or _lock_input:
+		return
+	GameState.note_set(_sid, _perfects, _misses, _reps_done, false)
+	_close(tr("Слез с тренажёра."), false, "back")
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not root.visible or _lock_input:
+		return
+	# Esc does nothing in gym_world while a set runs, so it is free to mean
+	# "get me off this thing". Swallowing it keeps the pause menu from opening
+	# on top of the dismount.
+	if event.is_action_pressed("pause_game") and not YandexSDK.is_ad_active():
+		quit_set()
+		get_viewport().set_input_as_handled()
 		return
 	if not event is InputEventKey or not event.pressed or event.echo:
 		return
@@ -979,8 +1022,8 @@ func _rep_sfx() -> String:
 			return "clank"
 
 
-func _close(msg: String, success: bool) -> void:
-	Audio.play("setdone" if success else "setfail")
+func _close(msg: String, success: bool, sfx: String = "") -> void:
+	Audio.play(sfx if sfx != "" else ("setdone" if success else "setfail"))
 	_lock_input = true
 	hint.text = msg
 	# Respect pause: a platform pause right after the last rep must not end the set behind the menu.

@@ -56,7 +56,7 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_rng.seed = 0x5EED_1DEA
 	_make_buses()
-	_build_sfx()
+	_build_sfx_ui()
 	for _i in SFX_VOICES:
 		var p := AudioStreamPlayer.new()
 		p.bus = "SFX"
@@ -74,10 +74,10 @@ func _ready() -> void:
 	# GameState is an earlier autoload, so its save is already restored here.
 	sfx_on = GameState.sfx_on
 	music_on = GameState.music_on
-	# The loops are the expensive part of the bank. Build them after the title
-	# screen has called LoadingAPI.ready(), one per frame, so neither the platform
-	# handshake nor a single frame takes the whole cost.
-	_build_music_loop.call_deferred()
+	# Everything past the UI beeps is the expensive part of the bank. Build it
+	# after the title screen has called LoadingAPI.ready(), one slice per frame,
+	# so neither the platform handshake nor a single frame takes the whole cost.
+	_build_sfx_reps.call_deferred()
 	_apply_volumes()
 
 
@@ -184,15 +184,20 @@ func _apply_volumes() -> void:
 
 # ------------------------------------------------------------------- the bank
 
-func _build_sfx() -> void:
-	# UI
+## Only the sounds the title screen can reach. The whole bank used to be built
+## here, which cost ~130 ms on desktop and several times that in a phone browser
+## — all of it before the first frame was drawn. play() ignores ids that are not
+## in the bank yet, so the rest builds a slice at a time once boot is over.
+func _build_sfx_ui() -> void:
 	_bank["click"] = _wav(_tone(0.055, 900.0, 1240.0, 0.35, 0.004, 3.0, 0.32))
 	_bank["back"] = _wav(_tone(0.075, 640.0, 380.0, 0.30, 0.004, 3.0, 0.30))
 	_bank["deny"] = _wav(_seq([
 		[0.0, _tone(0.09, 230.0, 210.0, 0.55, 0.004, 2.4, 0.34)],
 		[0.10, _tone(0.11, 185.0, 150.0, 0.55, 0.004, 2.4, 0.34)],
 	]))
-	# Reps
+
+
+func _build_sfx_reps() -> void:
 	_bank["perfect"] = _wav(_seq([
 		[0.0, _tone(0.09, 880.0, 880.0, 0.22, 0.003, 3.4, 0.34)],
 		[0.055, _tone(0.20, 1318.5, 1318.5, 0.18, 0.003, 2.8, 0.30)],
@@ -204,6 +209,10 @@ func _build_sfx() -> void:
 		[0.0, _noise(0.09, 900.0, 0.0, 0.002, 3.0, 0.14)],
 	]))
 	_bank["combo"] = _wav(_tone(0.07, 1046.5, 1568.0, 0.20, 0.003, 3.6, 0.24))
+	_build_sfx_world.call_deferred()
+
+
+func _build_sfx_world() -> void:
 	# Iron
 	_bank["clank"] = _wav(_metal(0.34, [1180.0, 1867.0, 2530.0, 3310.0], 0.30))
 	_bank["plate"] = _wav(_seq([
@@ -219,6 +228,10 @@ func _build_sfx() -> void:
 	_bank["water"] = _wav(_norm(_noise(0.85, 4200.0, 950.0, 0.10, 1.1, 1.0), 0.30))
 	_bank["steam"] = _wav(_norm(_noise(1.10, 2600.0, 500.0, 0.22, 0.9, 1.0), 0.26))
 	_bank["whoosh"] = _wav(_norm(_noise(0.26, 2200.0, 380.0, 0.05, 2.6, 1.0), 0.34))
+	_build_sfx_progress.call_deferred()
+
+
+func _build_sfx_progress() -> void:
 	# Economy and progress
 	_bank["coin"] = _wav(_seq([
 		[0.0, _tone(0.07, 1568.0, 1568.0, 0.25, 0.002, 3.6, 0.28)],
@@ -232,6 +245,7 @@ func _build_sfx() -> void:
 		[0.0, _tone(0.10, 440.0, 440.0, 0.40, 0.004, 3.0, 0.26)],
 		[0.16, _tone(0.14, 370.0, 330.0, 0.40, 0.004, 3.0, 0.26)],
 	]))
+	_build_music_loop.call_deferred()
 
 
 func _build_music_loop() -> void:

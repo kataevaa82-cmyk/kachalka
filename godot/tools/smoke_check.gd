@@ -14,7 +14,7 @@ func _ready() -> void:
 	_check_font()
 	_check_data()
 	_check_i18n()
-	_check_audio()
+	await _check_audio()
 	_check_state_regressions()
 	_check_level_progression()
 	await _check_gym_scene()
@@ -221,6 +221,10 @@ func _mentions_keys(text: String) -> bool:
 ## hold real samples, and the ad/tab mute must be reason-counted (Yandex: silence
 ## while an ad is up, sound back only when every reason is gone).
 func _check_audio() -> void:
+	# The bank builds one slice per frame after boot so the title screen is not
+	# held up by synthesis; give the whole chain room to finish before checking.
+	for i in 12:
+		await get_tree().process_frame
 	var wanted := [
 		"click", "back", "deny", "perfect", "good", "miss", "combo", "clank", "plate",
 		"rack", "step", "water", "steam", "whoosh", "coin", "quest", "setdone",

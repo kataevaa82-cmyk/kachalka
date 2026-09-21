@@ -2,6 +2,7 @@ extends Node3D
 ## Assembles Blender GLBs, collision proxies, lights, stations, player.
 
 const GltfRuntime := preload("res://scripts/gym/gltf_runtime.gd")
+const Surfaces := preload("res://scripts/gym/surfaces.gd")
 
 const ROOM_HALF_X := 7.7
 const ROOM_HALF_Z := 5.7
@@ -27,6 +28,7 @@ var _paused_before_platform: bool = false
 var _level_environment: Environment
 var _level_light: OmniLight3D
 var _level_sign: Label3D
+var _booths: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -36,11 +38,15 @@ func _ready() -> void:
 	workout.process_mode = Node.PROCESS_MODE_PAUSABLE
 	_instance_glb("res://assets/models/gym_env.glb", env_mount)
 	_instance_glb("res://assets/models/gym_stations.glb", stations_mount)
+	var dressed: Dictionary = {}
+	Surfaces.apply(env_mount, dressed)
+	Surfaces.apply(stations_mount, dressed)
 	_build_collision()
 	_build_lights()
 	_apply_level_theme(GameState.gym_level())
 	_wire_stations()
 	_spawn_props()
+	_spawn_booths()
 	_spawn_sauna_steam()
 	_spawn_shower()
 	player.global_position = Vector3(0.0, 0.02, 7.6)
@@ -60,6 +66,7 @@ func _process(delta: float) -> void:
 		_pulse_workout_fx(delta)
 	if GameState.paused or GameState.in_set:
 		return
+	_tick_booths(delta)
 	_near = _closest_target()
 	if hud.has_method("set_aim"):
 		hud.call("set_aim", not _near.is_empty())
@@ -111,7 +118,10 @@ func _try_interact() -> void:
 	var kind: String = str(_near.get("kind", "station"))
 	var sid: String = str(_near.get("id", ""))
 	if kind == "prop":
-		GameState.use_prop(sid)
+		if sid.begins_with("booth"):
+			_use_booth(sid)
+		else:
+			GameState.use_prop(sid)
 		return
 	if sid == "shop":
 		shop_layer.call("show_shop")
@@ -381,31 +391,37 @@ func _box_body(pos: Vector3, size: Vector3) -> void:
 func _build_lights() -> void:
 	var sun := DirectionalLight3D.new()
 	sun.rotation_degrees = Vector3(-52, 28, 0)
-	sun.light_energy = 0.82
-	sun.light_color = Color(1.0, 0.97, 0.93)
-	sun.light_specular = 0.28
+	sun.light_energy = 0.95
+	sun.light_color = Color(1.0, 0.96, 0.90)
+	sun.light_specular = 0.45
 	sun.shadow_enabled = true
 	sun.shadow_bias = 0.05
 	sun.shadow_normal_bias = 1.0
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
 	sun.directional_shadow_max_distance = 26.0
 	add_child(sun)
-	_level_light = _omni(Vector3(0.0, 3.15, 0.0), Color(1.0, 0.97, 0.92), 0.95)
-	_omni(Vector3(0.0, 2.45, 7.4), Color(0.98, 0.92, 0.82), 0.80)
-	_omni(Vector3(-11.0, 2.45, 0.0), Color(0.78, 0.84, 0.92), 0.85)
-	_omni(Vector3(-12.0, 1.85, -6.20), Color(0.95, 0.62, 0.40), 0.70)
-	_omni(Vector3(11.0, 2.45, 0.0), Color(0.80, 0.90, 0.94), 0.80)
-	_omni(Vector3(0.0, 2.45, -7.5), Color(0.82, 0.92, 0.80), 0.75)
-	_omni(Vector3(-6.4, 2.25, 8.1), Color(0.90, 0.92, 0.94), 0.60)
+	_level_light = _omni(Vector3(0.0, 3.15, 0.0), Color(1.0, 0.97, 0.92), 1.15)
+	# The main hall is 16 x 10 m; one lamp in the middle left the corners black.
+	_omni(Vector3(-5.2, 3.05, -2.6), Color(1.0, 0.96, 0.90), 0.72)
+	_omni(Vector3(5.2, 3.05, -2.6), Color(1.0, 0.96, 0.90), 0.72)
+	_omni(Vector3(-5.2, 3.05, 2.6), Color(1.0, 0.96, 0.90), 0.72)
+	_omni(Vector3(5.2, 3.05, 2.6), Color(1.0, 0.96, 0.90), 0.72)
+	_omni(Vector3(0.0, 2.45, 7.4), Color(0.98, 0.92, 0.82), 0.95)
+	_omni(Vector3(-11.0, 2.45, 0.0), Color(0.84, 0.89, 0.96), 1.00)
+	_omni(Vector3(-11.6, 2.35, 3.1), Color(0.86, 0.90, 0.95), 0.75)
+	_omni(Vector3(-12.0, 1.85, -6.20), Color(1.0, 0.66, 0.42), 0.85)
+	_omni(Vector3(11.0, 2.45, 0.0), Color(0.86, 0.94, 0.98), 0.95)
+	_omni(Vector3(0.0, 2.45, -7.5), Color(0.86, 0.95, 0.84), 0.92)
+	_omni(Vector3(-6.4, 2.25, 8.1), Color(0.92, 0.94, 0.96), 0.78)
 	var we := WorldEnvironment.new()
 	var env := Environment.new()
 	env.background_mode = Environment.BG_COLOR
 	env.background_color = Color(0.08, 0.09, 0.11)
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color(0.40, 0.41, 0.43)
-	env.ambient_light_energy = 0.62
+	env.ambient_light_energy = 0.70
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure = 0.92
+	env.tonemap_exposure = 1.0
 	env.adjustment_enabled = false
 	env.glow_enabled = false
 	env.fog_enabled = false
@@ -458,10 +474,10 @@ func _apply_level_theme(level: int) -> void:
 	if _level_environment:
 		_level_environment.background_color = Color.from_string(str(data.get("background", "#12151c")), Color(0.08, 0.09, 0.11))
 		_level_environment.ambient_light_color = Color.from_string(str(data.get("ambient", "#697381")), Color(0.40, 0.41, 0.43))
-		_level_environment.ambient_light_energy = 0.60 + float(level - 1) * 0.025
+		_level_environment.ambient_light_energy = 0.68 + float(level - 1) * 0.03
 	if _level_light:
-		_level_light.light_color = accent.lerp(Color.WHITE, 0.28)
-		_level_light.light_energy = 0.82 + float(level - 1) * 0.06
+		_level_light.light_color = accent.lerp(Color.WHITE, 0.55)
+		_level_light.light_energy = 1.10 + float(level - 1) * 0.07
 	if _level_sign:
 		_level_sign.text = tr("УРОВЕНЬ %d/6  ·  %s\n%s") % [level, GameState.level_name(level).to_upper(), GameState.level_rule(level)]
 		_level_sign.modulate = accent
@@ -498,6 +514,145 @@ func _spawn_props() -> void:
 		p.set_meta("prompt", d["prompt"])
 		p.set_meta("reach", d["reach"])
 		_prop_root.add_child(p)
+
+
+## The three changing stalls along the locker-room south wall. Blender bakes the
+## booths into one mesh, so the doors are stripped from that mesh and rebuilt
+## here where they can actually swing. The middle stall is the shower and stands
+## open; the other two are worth rummaging through.
+const BOOTH_X: Array[float] = [-13.28, -12.18, -11.08]
+const BOOTH_FRONT_Z := 2.84
+const BOOTH_SHOWER := 1
+const BOOTH_OPEN_ANGLE := 1.3
+const BOOTH_RESTOCK := 75.0
+
+
+func _spawn_booths() -> void:
+	var panel := _std_mat(Color(0.86, 0.82, 0.74), 0.0, 0.55)
+	var chrome := _std_mat(Color(0.62, 0.64, 0.68), 0.55, 0.38)
+	for i in BOOTH_X.size():
+		var cx: float = BOOTH_X[i]
+		var pivot := Node3D.new()
+		pivot.name = "BoothDoor%d" % i
+		# Hinge sits where the baked aluminium hinge post already is, so the door
+		# swings on the frame instead of floating beside it.
+		pivot.position = Vector3(cx - 0.48, 0.0, BOOTH_FRONT_Z)
+		add_child(pivot)
+		var leaf := MeshInstance3D.new()
+		var box := BoxMesh.new()
+		box.size = Vector3(0.92, 1.72, 0.04)
+		leaf.mesh = box
+		leaf.material_override = panel
+		leaf.position = Vector3(0.46, 1.14, 0.0)
+		pivot.add_child(leaf)
+		var handle := MeshInstance3D.new()
+		var hb := BoxMesh.new()
+		hb.size = Vector3(0.05, 0.10, 0.04)
+		handle.mesh = hb
+		handle.material_override = chrome
+		handle.position = Vector3(0.84, 1.15, 0.05)
+		pivot.add_child(handle)
+
+		var shower := i == BOOTH_SHOWER
+		if shower:
+			pivot.rotation.y = BOOTH_OPEN_ANGLE
+			continue
+
+		var item := _spawn_booth_item(cx)
+		var marker := Node3D.new()
+		marker.name = "EMP_Prop_booth%d" % i
+		marker.position = Vector3(cx, 0.0, BOOTH_FRONT_Z - 0.35)
+		marker.set_meta("prop_id", "booth%d" % i)
+		marker.set_meta("reach", 1.5)
+		_prop_root.add_child(marker)
+		_booths.append({"pivot": pivot, "item": item, "marker": marker, "open": false, "loot": true, "cd": 0.0})
+		_refresh_booth(_booths[_booths.size() - 1])
+
+
+func _spawn_booth_item(cx: float) -> Node3D:
+	var root := Node3D.new()
+	root.name = "BoothLoot"
+	# On the bench at the back of the stall, where a real gym bag would sit.
+	root.position = Vector3(cx, 0.56, 3.66)
+	root.visible = false
+	add_child(root)
+	var bag := MeshInstance3D.new()
+	var bm := BoxMesh.new()
+	bm.size = Vector3(0.34, 0.20, 0.20)
+	bag.mesh = bm
+	var mat := _std_mat(Color(0.20, 0.42, 0.52), 0.1, 0.55)
+	mat.emission_enabled = true
+	mat.emission = Color(0.12, 0.55, 0.62)
+	mat.emission_energy_multiplier = 0.55
+	bag.material_override = mat
+	root.add_child(bag)
+	var strap := MeshInstance3D.new()
+	var sc := CylinderMesh.new()
+	sc.top_radius = 0.016
+	sc.bottom_radius = 0.016
+	sc.height = 0.30
+	strap.mesh = sc
+	strap.material_override = _std_mat(Color(0.14, 0.15, 0.17), 0.0, 0.7)
+	strap.rotation_degrees = Vector3(0.0, 0.0, 90.0)
+	strap.position = Vector3(0.0, 0.12, 0.0)
+	root.add_child(strap)
+	return root
+
+
+func _std_mat(albedo: Color, metallic: float, roughness: float) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = albedo
+	m.metallic = metallic
+	m.roughness = roughness
+	return m
+
+
+func _refresh_booth(b: Dictionary) -> void:
+	var item: Node3D = b["item"]
+	item.visible = b["open"] and b["loot"]
+	var marker: Node3D = b["marker"]
+	if not b["open"]:
+		marker.set_meta("prompt", "Открыть кабинку")
+	elif b["loot"]:
+		marker.set_meta("prompt", "Забрать")
+	else:
+		marker.set_meta("prompt", "Пусто")
+
+
+func _use_booth(sid: String) -> void:
+	for b in _booths:
+		if str(b["marker"].get_meta("prop_id", "")) != sid:
+			continue
+		if not b["open"]:
+			b["open"] = true
+			Audio.play("rack", 0.7, -8.0)
+			var tw := create_tween()
+			tw.tween_property(b["pivot"], "rotation:y", BOOTH_OPEN_ANGLE, 0.45) \
+				.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		elif b["loot"]:
+			b["loot"] = false
+			b["cd"] = BOOTH_RESTOCK
+			GameState.loot_booth()
+		else:
+			Audio.play("deny", 1.0, -9.0)
+			GameState.say("Пусто. Только чужой запах и чья-то надежда.")
+		_refresh_booth(b)
+		return
+
+
+## Someone drops a bag in an empty stall eventually; that is the restock.
+func _tick_booths(delta: float) -> void:
+	for b in _booths:
+		if b["loot"] or b["cd"] <= 0.0:
+			continue
+		b["cd"] = float(b["cd"]) - delta
+		if b["cd"] > 0.0:
+			continue
+		b["loot"] = true
+		b["open"] = false
+		var tw := create_tween()
+		tw.tween_property(b["pivot"], "rotation:y", 0.0, 0.5).set_trans(Tween.TRANS_SINE)
+		_refresh_booth(b)
 
 
 func _spawn_shower() -> void:
