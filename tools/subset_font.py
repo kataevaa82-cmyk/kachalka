@@ -22,6 +22,11 @@ import sys
 
 from fontTools import subset
 from fontTools.ttLib import TTFont
+from fontTools.varLib import instancer
+
+# The UI is drawn at one weight. Pinning it in the file beats shipping the whole
+# variable range and asking the text server to interpolate at runtime.
+WEIGHT = 600
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 GODOT = ROOT / "godot"
@@ -78,11 +83,13 @@ def main():
     s = subset.Subsetter(options=opts)
     s.populate(text=text)
     s.subset(font)
+    if "fvar" in font:
+        font = instancer.instantiateVariableFont(font, {"wght": WEIGHT})
     font.flavor = "woff2"
     font.save(DST)
-    print("glyphs %d -> %d, %d KB -> %d KB" % (
+    print("glyphs %d -> %d, %d KB -> %d KB (weight pinned to %d)" % (
         before, len(TTFont(DST).getGlyphOrder()),
-        SRC.stat().st_size // 1024, DST.stat().st_size // 1024))
+        SRC.stat().st_size // 1024, DST.stat().st_size // 1024, WEIGHT))
 
 
 if __name__ == "__main__":

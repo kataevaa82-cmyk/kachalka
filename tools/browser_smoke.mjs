@@ -1,5 +1,5 @@
 import { createServer } from "node:http";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { globSync, statSync } from "node:fs";
 import { platform, tmpdir } from "node:os";
 import { dirname, extname, join, normalize } from "node:path";
@@ -225,6 +225,14 @@ try {
 		console.log(JSON.stringify({ gym }));
 		// LoadingAPI.ready is one-shot: the gym must not repeat the title's call.
 		if (gym.gameplay !== "started" || gym.calls.loading !== 1 || gym.calls.starts < 1) process.exitCode = 1;
+		// SHOT=path grabs the gym as the custom wasm actually draws it. The editor
+		// binary cannot stand in here: it is built with a different text server, so
+		// this is the only way to see whether the shipped one renders Cyrillic.
+		if (process.env.SHOT) {
+			const shot = await command(socketUrl, "Page.captureScreenshot", { format: "png" });
+			await writeFile(process.env.SHOT, Buffer.from(shot.data, "base64"));
+			console.log(JSON.stringify({ screenshot: process.env.SHOT }));
+		}
 		const snapshot = async () => JSON.parse(await evaluate(socketUrl, "JSON.stringify({ gameplay: window.__gameplay || '', calls: window.__sdkCalls })"));
 		const settle = async (label, want) => {
 			let state;

@@ -4,6 +4,3 @@
 
 [resource]
 base_font = ExtResource("1_inter")
-variation_opentype = {
-2003265652: 600
-}
